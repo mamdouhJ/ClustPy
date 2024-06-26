@@ -25,7 +25,7 @@ setup(
     description='A Python library for advanced clustering algorithms',
     long_description=_load_readme(),
     long_description_content_type="text/markdown",
-    python_requires='>=3.10',
+    python_requires='>=3.8',
     install_requires=['numpy',
                       'scipy',
                       'scikit-learn',
