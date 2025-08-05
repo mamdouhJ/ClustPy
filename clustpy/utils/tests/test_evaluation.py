@@ -229,14 +229,14 @@ def test_evaluation_df_to_latex_table_multiple_datasets():
                                     evaluation_metrics=metrics, n_repetitions=n_repetitions, add_runtime=False,
                                     add_n_clusters=True,
                                     save_path="df.csv", save_intermediate_results=False, random_state=1)
-    output_str1 = evaluation_df_to_latex_table(df, "mean", "latex1.txt", None, None, False, False, None, None, None, 0)
+    output_str1 = evaluation_df_to_latex_table(df, "mean", "latex1.txt", None, None, False, False, False, None, None, None, 0)
     output_str1 = output_str1.split("\n")
     assert os.path.isfile("latex1.txt")
     read_file1 = open("latex1.txt", "r").readlines()
     assert len(output_str1) == len(read_file1)
     assert all([output_str1[i] + "\n" == read_file1[i] for i in range(len(output_str1) - 1)] + [output_str1[-1] == read_file1[-1]])
     # Test with input file
-    output_str2 = evaluation_df_to_latex_table("df.csv", "mean", "latex2.txt", "std", "mean", True, True, "red", [True, True, False, None],
+    output_str2 = evaluation_df_to_latex_table("df.csv", "mean", "latex2.txt", "std", "mean", True, True, True, "red", [True, True, False, None],
                                                 100, 2)
     output_str2 = output_str2.split("\n")
     assert os.path.isfile("latex2.txt")
@@ -268,6 +268,7 @@ def test_evaluation_df_to_latex_table_multiple_datasets():
     assert all(["pm" in read_file2[i] and "pm" not in read_file1[i] for i in non_equal_lines])
     assert all(["bm" in read_file2[i] and "bm" not in read_file1[i] for i in non_equal_lines if i not in [11, 16]])
     assert all(["underline" in read_file2[i] and "underline" not in read_file1[i] for i in non_equal_lines if i not in [11, 16]])
+    assert all(["dashuline" in read_file2[i] and "dashuline" not in read_file1[i] for i in non_equal_lines if i not in [11, 16]])
     assert all(["cellcolor" in read_file2[i] and "cellcolor" not in read_file1[i] for i in non_equal_lines if i not in [11, 16]])
     assert all(["(" in read_file2[i] and ")" in read_file2[i] and "(" not in read_file1[i] and ")" not in read_file1[i] for i in non_equal_lines])
 
@@ -289,14 +290,14 @@ def test_evaluation_df_to_latex_table_single_dataset():
     df = evaluate_dataset(X=X, evaluation_algorithms=algorithms, evaluation_metrics=metrics, labels_true=L,
                           n_repetitions=n_repetitions, add_runtime=True,
                           add_n_clusters=False, save_path="df.csv", random_state=1, aggregation_functions=[np.max, np.std])
-    output_str1 = evaluation_df_to_latex_table(df, 1, "latex1.txt", None, None, False, False, None, None, None, 0)
+    output_str1 = evaluation_df_to_latex_table(df, 1, "latex1.txt", None, None, False, False, False, None, None, None, 0)
     output_str1 = output_str1.split("\n")
     assert os.path.isfile("latex1.txt")
     read_file1 = open("latex1.txt", "r").readlines()
     assert len(output_str1) == len(read_file1)
     assert all([output_str1[i] + "\n" == read_file1[i] for i in range(len(output_str1) - 1)] + [output_str1[-1] == read_file1[-1]])
     # Test with input file
-    output_str2 = evaluation_df_to_latex_table("df.csv", 1, "latex2.txt", "std", "max", True, True, "red", [True, True, False, False],
+    output_str2 = evaluation_df_to_latex_table("df.csv", 1, "latex2.txt", "std", "max", True, True, True, "red", [True, True, False, False],
                                                 100, 2)
     output_str2 = output_str2.split("\n")
     assert os.path.isfile("latex2.txt")
@@ -324,5 +325,6 @@ def test_evaluation_df_to_latex_table_single_dataset():
     assert all(["pm" in read_file2[i] and "pm" not in read_file1[i] for i in non_equal_lines])
     assert all(["bm" in read_file2[i] and "bm" not in read_file1[i] for i in non_equal_lines])
     assert all(["underline" in read_file2[i] and "underline" not in read_file1[i] for i in non_equal_lines])
+    assert all(["dashuline" in read_file2[i] and "dashuline" not in read_file1[i] for i in non_equal_lines])
     assert all(["cellcolor" in read_file2[i] and "cellcolor" not in read_file1[i] for i in non_equal_lines])
     assert all(["(" in read_file2[i] and ")" in read_file2[i] and "(" not in read_file1[i] and ")" not in read_file1[i] for i in non_equal_lines])

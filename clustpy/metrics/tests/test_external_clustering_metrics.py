@@ -1,7 +1,7 @@
 import numpy as np
 from clustpy.metrics import unsupervised_clustering_accuracy, variation_of_information, \
     information_theoretic_external_cluster_validity_measure, fair_normalized_mutual_information, purity
-from clustpy.metrics.clustering_metrics import _check_number_of_points
+from clustpy.metrics.external_clustering_metrics import _check_number_of_points
 import pytest
 from sklearn.metrics import normalized_mutual_info_score as nmi
 

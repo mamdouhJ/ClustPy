@@ -129,11 +129,6 @@ class _Dip_Gradient(torch.autograd.Function):
         if -1 in modal_triangle:
             return torch.zeros((X_proj.shape[0], projection_vector.shape[0])).to(device), torch.zeros(
                 projection_vector.shape).to(device)
-        # Grad_output equals gradient of outer operations. Update grad_output to consider dip
-        if grad_output > 0:
-            grad_output = grad_output * dip_value * 4
-        else:
-            grad_output = grad_output * (0.25 - dip_value) * 4
         # Calculate the partial derivative for all dimensions
         data_index_i1, data_index_i2, data_index_i3 = sorted_indices[modal_triangle]
         # Get A and c
@@ -524,8 +519,10 @@ class _DipEncoder_Module(torch.nn.Module):
         """
         # Calculate dip cluster m
         dip_value_m = self.dip_module(X_embed[points_in_m], projection_axis_index)
+        dip_value_m = (dip_value_m.detach() * 4) * dip_value_m # weight by dip
         # Calculate dip cluster n
         dip_value_n = self.dip_module(X_embed[points_in_n], projection_axis_index)
+        dip_value_n = (dip_value_n.detach() * 4) * dip_value_n # weight by dip
         # Calculate dip combined clusters m and n
         if n_points_in_m > self.max_cluster_size_diff_factor * n_points_in_n:
             perm = torch.randperm(n_points_in_m).to(device)
@@ -539,6 +536,7 @@ class _DipEncoder_Module(torch.nn.Module):
                                     projection_axis_index)
         else:
             dip_value_mn = self.dip_module(X_embed[torch.cat([points_in_m, points_in_n])], projection_axis_index)
+        dip_value_mn = (0.25 - dip_value_mn.detach()) * 4 * dip_value_mn # weight by dip
         # We want to maximize dip between clusters => set mn loss to -dip
         dip_loss_new = 0.5 * (dip_value_m + dip_value_n) - dip_value_mn
         return dip_loss_new
