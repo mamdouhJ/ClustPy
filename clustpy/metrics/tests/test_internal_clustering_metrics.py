@@ -1,6 +1,5 @@
 import numpy as np
 from clustpy.metrics import cvnn_score
-import pytest
 
 
 def test_cvnn_score():
@@ -36,5 +35,5 @@ def test_cvnn_score():
     cvnn_6 = cvnn_score(X, [L1, L2, L3], n_neighbors=3)
     expected_seperation_6 = np.array([expected_seperation_1, expected_seperation_4, expected_seperation_5])
     expected_compactness_6 = np.array([expected_compactness_1, expected_compactness_4, expected_compactness_5])
-    assert np.array_equal(cvnn_6, expected_seperation_6 / expected_seperation_6.max() + expected_compactness_6 / expected_compactness_6.max())
+    assert np.array_equal(cvnn_6, expected_seperation_6 / expected_seperation_5 + expected_compactness_6 / expected_compactness_5)
     assert cvnn_6[-1] == 2.
