@@ -1,22 +1,21 @@
 from clustpy.deep import DDC, N2D
 from clustpy.deep.ddc_n2d import DDC_density_peak_clustering
-from clustpy.data import create_subspace_data
 from sklearn.datasets import make_blobs
-import torch
 import numpy as np
 from sklearn.manifold import Isomap
 from clustpy.utils.checks import check_clustpy_estimator
+from clustpy.deep.tests._helpers_for_tests import _test_dc_algorithm_simple
 
 
 def test_ddc_estimator():
     # Ignore check_methods_subset_invariance due to numerical issues
-    check_clustpy_estimator(DDC(pretrain_epochs=3, tsne_params={"perplexity": 5}),
+    check_clustpy_estimator(DDC(pretrain_epochs=3, tsne_params={"perplexity": 5, "n_components": 1}),
                             ("check_complex_data", "check_methods_subset_invariance"))
 
 
 def test_n2d_estimator():
     # Ignore check_methods_subset_invariance due to numerical issues
-    check_clustpy_estimator(N2D(3, pretrain_epochs=3, manifold_params={"perplexity": 5}),
+    check_clustpy_estimator(N2D(3, pretrain_epochs=3, manifold_params={"perplexity": 5, "n_components": 1}),
                             ("check_complex_data", "check_methods_subset_invariance"))
 
 
@@ -34,39 +33,12 @@ def test_ddc_density_peak_clustering():
 
 
 def test_simple_ddc():
-    torch.use_deterministic_algorithms(True)
-    X, labels = create_subspace_data(1000, subspace_features=(3, 50), random_state=1)
-    ddc = DDC(pretrain_epochs=3, random_state=1)
-    assert not hasattr(ddc, "labels_")
-    ddc.fit(X)
-    assert ddc.labels_.dtype == np.int32
-    assert ddc.labels_.shape == labels.shape
-    X_embed = ddc.transform(X)
-    assert X_embed.shape == (X.shape[0], ddc.embedding_size)
-    # Test if random state is working
-    ddc2 = DDC(pretrain_epochs=3, random_state=1, ratio=999)
-    ddc2.ratio = 0.1
-    ddc2.fit(X)
-    assert np.array_equal(ddc.labels_, ddc2.labels_)
+    ddc = DDC(ratio=1.1)
+    _test_dc_algorithm_simple(ddc, True, False)
 
 
 def test_simple_n2d():
-    torch.use_deterministic_algorithms(True)
-    X, labels = create_subspace_data(1000, subspace_features=(3, 50), random_state=1)
-    n2d = N2D(n_clusters=3, pretrain_epochs=3, random_state=1)
-    assert not hasattr(n2d, "labels_")
-    n2d.fit(X)
-    assert n2d.labels_.dtype == np.int32
-    assert n2d.labels_.shape == labels.shape
-    X_embed = n2d.transform(X)
-    assert X_embed.shape == (X.shape[0], n2d.embedding_size)
-    # Test if random state is working
-    n2d2 = N2D(n_clusters=3, pretrain_epochs=3, random_state=1)
-    n2d2.fit(X)
-    assert np.array_equal(n2d.labels_, n2d2.labels_)
-    # Check different manifold
-    n2d = N2D(n_clusters=3, pretrain_epochs=3, manifold_class=Isomap,
-              manifold_params={"n_components": 2, "n_neighbors": 20}, random_state=1)
-    n2d.fit(X)
-    assert n2d.labels_.dtype == np.int32
-    assert n2d.labels_.shape == labels.shape
+    n2d = N2D(3)
+    _test_dc_algorithm_simple(n2d, True, False)
+    n2d_isomap = N2D(3, manifold_class=Isomap, manifold_params={"n_components": 2, "n_neighbors": 7})
+    _test_dc_algorithm_simple(n2d_isomap, True, False)

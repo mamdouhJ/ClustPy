@@ -64,6 +64,7 @@ class FeedforwardAutoencoder(_AbstractAutoencoder):
                  decoder_output_fn: torch.nn.Module = None, work_on_copy: bool = True,
                  random_state: np.random.RandomState | int = None):
         super().__init__(work_on_copy, random_state)
+        self.allow_nd = False
         if decoder_layers is None:
             decoder_layers = layers[::-1]
         if (layers[-1] != decoder_layers[0]):

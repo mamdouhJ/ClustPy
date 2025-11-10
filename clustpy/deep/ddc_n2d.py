@@ -362,7 +362,7 @@ class DDC(_AbstractDeepClusteringAlgo):
         self.cluster_centers_ = centers_ae
         self.neural_network_trained_ = neural_network
         self.tsne_ = tsne
-        self.set_n_featrues_in(X.shape[1])
+        self.set_n_featrues_in(X)
         return self
     
     def predict(self, X: np.ndarray,) -> np.ndarray:
@@ -505,7 +505,7 @@ class N2D(_AbstractDeepClusteringAlgo):
         self.cluster_centers_ = centers_ae
         self.neural_network_trained_ = neural_network
         self.manifold_ = manifold
-        self.set_n_featrues_in(X.shape[1])
+        self.set_n_featrues_in(X)
         return self
     
     def predict(self, X: np.ndarray,) -> np.ndarray:

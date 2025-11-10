@@ -86,6 +86,7 @@ class ConvolutionalAutoencoder(_AbstractAutoencoder):
                  pretrained_encoder_weights: Weights = None, pretrained_decoder_weights: Weights = None,
                  work_on_copy: bool = True, random_state: np.random.RandomState | int = None, **fc_kwargs):
         super().__init__(work_on_copy, random_state)
+        self.allow_nd_input = True
         self.input_height = input_height
 
         # Check if layers match

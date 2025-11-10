@@ -1,12 +1,12 @@
 from clustpy.deep.neural_networks._abstract_autoencoder import _AbstractAutoencoder
 from clustpy.deep import get_dataloader
-from clustpy.data import create_subspace_data
 import torch
+from clustpy.deep.tests._helpers_for_tests import _get_dc_test_data
 
 
 def test_abstract_autoencoder():
-    data, _ = create_subspace_data(1000, subspace_features=(3, 50), random_state=1)
-    batch_size = 256
+    data, _ = _get_dc_test_data()
+    batch_size = 30
     data_batch = torch.Tensor(data[:batch_size])
     autoencoder = _AbstractAutoencoder()
     # Test encoding
@@ -21,9 +21,9 @@ def test_abstract_autoencoder():
 
 
 def test_abstract_autoencoder_with_dummy_torch_parameter():
-    data, _ = create_subspace_data(1000, subspace_features=(3, 50), random_state=1)
-    batch_size = 256
-    data_batch = [torch.arange(256), torch.Tensor(data[:batch_size])]
+    data, _ = _get_dc_test_data()
+    batch_size = 30
+    data_batch = [torch.arange(30), torch.Tensor(data[:batch_size])]
     loss_fn = torch.nn.MSELoss()
     autoencoder = _AbstractAutoencoder()
     autoencoder.dummy_parameter = torch.nn.Parameter(torch.tensor([0.]))  # Needed for fit to work
@@ -34,7 +34,7 @@ def test_abstract_autoencoder_with_dummy_torch_parameter():
     assert torch.equal(data_batch[1], decoded)
     assert torch.equal(loss, torch.tensor(0.))
     # Test augmented loss
-    data_batch_aug = [torch.arange(256), torch.Tensor(data[batch_size:2 * batch_size]), torch.Tensor(data[:batch_size])]
+    data_batch_aug = [torch.arange(30), torch.Tensor(data[batch_size:2 * batch_size]), torch.Tensor(data[:batch_size])]
     loss, embedded, decoded, embedded_aug, decoded_aug = autoencoder.loss_augmentation(
         data_batch_aug, loss_fn, torch.device("cpu"))
     assert torch.equal(data_batch_aug[2], embedded)
@@ -57,7 +57,7 @@ def test_abstract_autoencoder_with_dummy_torch_parameter():
     assert autoencoder.fitted is True
     autoencoder.fitted = False
     # Test fitting (with data and eval_data)
-    eval_data, _ = create_subspace_data(500, subspace_features=(3, 50), random_state=1)
+    eval_data, _ = _get_dc_test_data()
     assert autoencoder.fitted is False
     autoencoder.fit(n_epochs=3, optimizer_params={"lr": 1e-3}, data=data, data_eval=eval_data)
     assert autoencoder.fitted is True

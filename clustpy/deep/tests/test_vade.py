@@ -1,9 +1,10 @@
 from clustpy.deep import VaDE
-from clustpy.data import create_subspace_data
 import numpy as np
 import torch
 from clustpy.utils.checks import check_clustpy_estimator
 from clustpy.deep import mean_squared_error
+from clustpy.deep.tests._helpers_for_tests import _get_dc_test_data
+from clustpy.deep.neural_networks import VariationalAutoencoder
 
 
 def test_vade_estimator():
@@ -14,10 +15,11 @@ def test_vade_estimator():
 
 def test_simple_vade():
     torch.use_deterministic_algorithms(True)
-    X, labels = create_subspace_data(1000, subspace_features=(3, 50), random_state=1)
+    X, labels = _get_dc_test_data()
     X = (X - np.min(X)) / (np.max(X) - np.min(X))
-    vade = VaDE(3, pretrain_epochs=3, clustering_epochs=3,
-                initial_clustering_params={"n_init": 1, "covariance_type": "diag"}, random_state=1)
+    nn = (VariationalAutoencoder, {"layers": [X.shape[1], 10, 3], "random_state": 42})
+    vade = VaDE(3, batch_size=30, pretrain_epochs=3, clustering_epochs=3,
+                initial_clustering_params={"n_init": 1, "covariance_type": "diag"}, random_state=42, embedding_size=3, neural_network=nn)
     assert not hasattr(vade, "labels_")
     vade.fit(X)
     assert vade.labels_.dtype == np.int32
@@ -25,8 +27,8 @@ def test_simple_vade():
     X_embed = vade.transform(X)
     assert X_embed.shape == (X.shape[0], vade.embedding_size)
     # Test if random state is working
-    vade2 = VaDE(3, pretrain_epochs=3, clustering_epochs=3,
-                 initial_clustering_params={"n_init": 1, "covariance_type": "diag"}, random_state=1)
+    vade2 = VaDE(3, batch_size=30, pretrain_epochs=3, clustering_epochs=3,
+                 initial_clustering_params={"n_init": 1, "covariance_type": "diag"}, random_state=42, embedding_size=3, neural_network=nn)
     vade2.fit(X)
     assert np.array_equal(vade.labels_, vade2.labels_)
     assert np.array_equal(vade.cluster_centers_, vade2.cluster_centers_)

@@ -639,7 +639,7 @@ class VaDE(_AbstractDeepClusteringAlgo):
         self.vade_cluster_centers_ = vade_centers
         self.vade_covariances_ = vade_covariances
         self.neural_network_trained_ = neural_network
-        self.set_n_featrues_in(X.shape[1])
+        self.set_n_featrues_in(X)
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:

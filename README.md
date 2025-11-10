@@ -364,4 +364,7 @@ Benchmarking Deep Clustering Algorithms With ClustPy.
 - [Dying Clusters Is All You Need - Deep Clustering With an Unknown Number of Clusters](https://ieeexplore.ieee.org/document/10917902) (ICDMW 12/2024)
 - [A Symmetric Purity Measure for Clustering Comparison](https://link.springer.com/article/10.1007/s40745-025-00594-z) (Annals of Data Science 04/2025)
 - [Breaking the Reclustering Barrier in Centroid-based Deep Clustering](https://openreview.net/forum?id=r01fcKhzT5) (ICLR 04/2025)
+- [DCMatch - Identify Matching Architectures in Deep Clustering Through Meta-learning](https://link.springer.com/chapter/10.1007/978-981-96-8170-9_17) (PAKDD 06/2025)
+- [Going Offline: An Evaluation of the Offline Phase in Stream Clustering](https://link.springer.com/chapter/10.1007/978-3-032-06109-6_18) (ECML PKDD 09/2025)
 - [Statistical Modeling of Univariate Multimodal Data](https://www.sciencedirect.com/science/article/pii/S0925231225013918) (Neurocomputing 10/2025)
+- [A Study of Deep Clustering in Spike Sorting](https://link.springer.com/article/10.1007/s12021-025-09751-4) (Neuroinformatics 10/2025)

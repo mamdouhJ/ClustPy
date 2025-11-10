@@ -35,7 +35,7 @@ def cvnn_score(X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int
     Liu, Yanchi, et al. "Understanding and enhancement of internal clustering validation measures."
     IEEE transactions on cybernetics 43.3 (2013): 982-994.
     """
-    def _internlal_cvnn_score(X: np.ndarray, labels: np.ndarray, nrbs_indices: np.ndarray, metric: str) -> (float, float):
+    def _internal_cvnn_score(X: np.ndarray, labels: np.ndarray, nrbs_indices: np.ndarray, metric: str) -> (float, float):
         """
         The real calculation method of the CVNN score. 
 
@@ -93,14 +93,14 @@ def cvnn_score(X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int
         cluster_separations = np.zeros(n_labels)
         cluster_compactnesses = np.zeros(n_labels)
         for i, l in enumerate(labels):
-            cluster_separation_l, cluster_compactness_l = _internlal_cvnn_score(X, l, nrbs_indices, metric)
+            cluster_separation_l, cluster_compactness_l = _internal_cvnn_score(X, l, nrbs_indices, metric)
             cluster_separations[i] = cluster_separation_l
             cluster_compactnesses[i] = cluster_compactness_l
         # Normalize scores
         cvnn = cluster_separations / cluster_separations.max() + cluster_compactnesses / cluster_compactnesses.max()
     elif isinstance(labels, np.ndarray):
         # Do not normalize scores
-        cluster_separation, cluster_compactness = _internlal_cvnn_score(X, labels, nrbs_indices, metric)
+        cluster_separation, cluster_compactness = _internal_cvnn_score(X, labels, nrbs_indices, metric)
         cvnn = cluster_separation + cluster_compactness
     else:
         raise ValueError("The labels must be of type list/tuple (indicating a list of different labels) or np.ndarray (indicating a single labels array). Your input is {0}".format(type(labels)))

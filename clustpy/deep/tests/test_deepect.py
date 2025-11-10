@@ -1,12 +1,12 @@
-from clustpy.deep import DeepECT, get_default_augmented_dataloaders
+from clustpy.deep import DeepECT
 from clustpy.deep.deepect import _DeepECT_Module, _DeepECT_ClusterTreeNode
 from clustpy.hierarchical._cluster_tree import BinaryClusterTree
 from clustpy.deep.tests._helpers_for_tests import _TestAutoencoder
 from clustpy.deep._data_utils import get_dataloader
 import numpy as np
 import torch
-from clustpy.data import create_subspace_data, load_optdigits
 from clustpy.utils.checks import check_clustpy_estimator
+from clustpy.deep.tests._helpers_for_tests import _test_dc_algorithm_simple, _test_dc_algorithm_with_augmentation
 
 
 def test_deepect_estimator():
@@ -111,22 +111,8 @@ def test_DeepECT_Module():
 
 
 def test_simple_deepect():
-    torch.use_deterministic_algorithms(True)
-    X, labels = create_subspace_data(1000, subspace_features=(3, 10), random_state=1)
-    deepect = DeepECT(pretrain_epochs=3, clustering_epochs=4, grow_interval=1, random_state=1)
-    assert not hasattr(deepect, "labels_")
-    deepect.fit(X)
-    assert deepect.labels_.dtype == np.int32
-    assert deepect.labels_.shape == labels.shape
-    X_embed = deepect.transform(X)
-    assert X_embed.shape == (X.shape[0], deepect.embedding_size)
-    # Test if random state is working
-    deepect2 = DeepECT(pretrain_epochs=3, clustering_epochs=4, grow_interval=1, random_state=1)
-    deepect2.fit(X)
-    assert np.array_equal(deepect.labels_, deepect2.labels_)
-    # Test predict
-    labels_predict = deepect.predict(X)
-    assert np.array_equal(deepect.labels_, labels_predict)
+    deepect = DeepECT(grow_interval=1)
+    deepect, deepect2 = _test_dc_algorithm_simple(deepect)
     # Test flat clustering
     assert len(deepect.tree_.get_leaf_and_split_nodes()[0]) > 2
     assert np.unique(deepect.labels_).shape[0] > 2
@@ -137,14 +123,5 @@ def test_simple_deepect():
 
 
 def test_deepect_augmentation():
-    torch.use_deterministic_algorithms(True)
-    dataset = load_optdigits()
-    data = dataset.images[:1000]
-    labels = dataset.target[:1000]
-    aug_dl, orig_dl = get_default_augmented_dataloaders(data)
-    clusterer = DeepECT(pretrain_epochs=3, clustering_epochs=4, grow_interval=1, random_state=1,
-                        custom_dataloaders=[aug_dl, orig_dl], augmentation_invariance=True)
-    assert not hasattr(clusterer, "labels_")
-    clusterer.fit(data)
-    assert clusterer.labels_.dtype == np.int32
-    assert clusterer.labels_.shape == labels.shape
+    deepect = DeepECT(grow_interval=1)
+    _test_dc_algorithm_with_augmentation(deepect)
