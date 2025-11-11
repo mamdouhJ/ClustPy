@@ -93,20 +93,25 @@ def _execute_two_means(X: np.ndarray, ids_in_each_cluster: list, cluster_id_to_s
     """
     assert X.shape[0] >= 2, "X must contain at least 2 elements"
     # Prepare cluster for splitting
-    old_center = centers[cluster_id_to_split, :]
-    reduced_centers = np.delete(centers, cluster_id_to_split, axis=0)
+    old_center = centers[cluster_id_to_split]
+    tmp_centers = np.zeros((centers.shape[0] + 1, centers.shape[1]))
+    tmp_centers[:-1] = centers
     ids_in_cluster = ids_in_each_cluster[cluster_id_to_split]
     # Try to find kmeans result with smallest squared distances
     best_kmeans = None
     # Get random points in cluster as new centers
-    n_split_trials = min(n_split_trials, ids_in_cluster.shape[0])
-    random_centers = X[random_state.choice(ids_in_cluster, n_split_trials, replace=False), :]
+    if ids_in_cluster.shape[0] > n_split_trials:
+        random_centers = X[random_state.choice(ids_in_cluster, n_split_trials, replace=False)]
+    else:
+        n_split_trials = ids_in_cluster.shape[0]
+        random_centers = X
     # Calculate second new centers as: new2 = old - (new1 - old)
     adjusted_centers = old_center - (random_centers - old_center)
     # Get Kmeans result with minimum Kmeans-error
     for i in range(n_split_trials):
         # Run kmeans with new centers
-        tmp_centers = np.r_[reduced_centers, [random_centers[i]], [adjusted_centers[i]]]
+        tmp_centers[cluster_id_to_split] = random_centers[i]
+        tmp_centers[-1] = adjusted_centers[i]
         kmeans = KMeans(n_clusters=tmp_centers.shape[0], init=tmp_centers, n_init=1, random_state=random_state)
         kmeans.fit(X)
         # Check squared distances to find best kmeans result
