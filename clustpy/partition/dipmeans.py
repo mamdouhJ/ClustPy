@@ -78,6 +78,9 @@ def _dipmeans(X: np.ndarray, significance: float, split_viewers_threshold: float
             if split_viewers.shape[0] / ids_in_cluster.shape[0] > split_viewers_threshold:
                 # Calculate cluster score
                 cluster_scores[c] = np.mean(split_viewers)
+            if cluster_scores[c] == 1:
+                # Maximum score found. No need to search for another potential cluster
+                break
         # Get cluster with maximum score
         cluster_id_to_split = np.argmax(cluster_scores)
         # Check if any cluster has to be split

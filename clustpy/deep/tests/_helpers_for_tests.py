@@ -20,14 +20,14 @@ def _get_dc_test_nr_data():
 
 
 def _get_dc_test_neuralnetwork(input_dim: int):
-    neural_network = (FeedforwardAutoencoder, {"layers": [input_dim, 10, 3], "random_state": 42})
+    neural_network = (FeedforwardAutoencoder, {"layers": [input_dim, 10, 4], "random_state": 42})
     return neural_network
 
 
 def _set_params_for_dc_algorithm(algo: _AbstractDeepClusteringAlgo, n_dims: int):
     nn = _get_dc_test_neuralnetwork(n_dims)
     algo.neural_network = nn
-    algo.embedding_size = 3
+    algo.embedding_size = 4
     algo.random_state = 42
     algo.batch_size = 30
     if hasattr(algo, "pretrain_epochs"):
@@ -47,6 +47,11 @@ def _test_dc_algorithm_simple(algo: _AbstractDeepClusteringAlgo, check_random_st
     algo.fit(X)
     assert algo.labels_.dtype == np.int32
     assert algo.labels_.shape == labels.shape
+    if hasattr(algo, "n_clusters"):
+        if use_nr_data:
+            assert np.array_equal([len(np.unique(algo.labels_[:, i])) for i in range(labels.shape[1])], algo.n_clusters)
+        else:
+            assert len(np.unique(algo.labels_)) == algo.n_clusters
     X_embed = algo.transform(X)
     assert X_embed.shape == (X.shape[0], algo.embedding_size)
     if check_random_state:
@@ -80,6 +85,11 @@ def _test_dc_algorithm_with_augmentation(algo: _AbstractDeepClusteringAlgo, cust
     algo.fit(data)
     assert algo.labels_.dtype == np.int32
     assert algo.labels_.shape == labels.shape
+    if hasattr(algo, "n_clusters"):
+        if use_nr_data:
+            assert np.array_equal([len(np.unique(algo.labels_[:, i])) for i in range(algo.labels_.shape[1])], algo.n_clusters)
+        else:
+            assert len(np.unique(algo.labels_)) == algo.n_clusters
 
 
 def _get_test_dataloader(data, batch_size, shuffle, drop_last):

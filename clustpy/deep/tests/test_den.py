@@ -13,13 +13,13 @@ def test_den_estimator():
 
 
 def test_simple_den():
-    den = DEN(3, group_size=1)
+    den = DEN(3, group_size=[2, 1, 1])
     den, den2 = _test_dc_algorithm_simple(den)
     assert np.array_equal(den.cluster_centers_, den2.cluster_centers_)
     # Use group_size
     X, labels = _get_dc_test_data()
     nn = (FeedforwardAutoencoder, {"layers": [X.shape[1], 10, 6], "random_state": 42})
-    den = DEN(3, group_size=[2, 2, 2], batch_size=30, pretrain_epochs=3, random_state=42, neural_network=nn, embedding_size=6)
+    den = DEN(3, group_size=2, batch_size=30, pretrain_epochs=3, random_state=42, neural_network=nn, embedding_size=6)
     assert not hasattr(den, "labels_")
     den.fit(X)
     assert den.labels_.dtype == np.int32

@@ -11,7 +11,7 @@ def test_neighbor_encoder():
     data, _ = _get_dc_test_data()
     batch_size = 30
     data_batch = torch.Tensor(data[:batch_size])
-    embedding_dim = 3
+    embedding_dim = 4
     n_neighbors = 3
     # Get dataloader with neighbors
     dist_matrix = squareform(pdist(data))
@@ -52,7 +52,7 @@ def test_neighbor_encoder():
 
 def test_neighbor_encoder_in_deep_clustering():
     data, labels = _get_dc_test_data()
-    embedding_dim = 3
+    embedding_dim = 4
     n_neighbors = 3
     # Get dataloader with neighbors
     dist_matrix = squareform(pdist(data))

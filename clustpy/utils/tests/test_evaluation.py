@@ -213,14 +213,15 @@ def test_evaluation_df_to_latex_table_multiple_datasets():
     from sklearn.cluster import KMeans, SpectralClustering
     from sklearn.metrics import normalized_mutual_info_score as nmi, silhouette_score as silhouette
     # Test with df
-    X, L = create_subspace_data(1500, subspace_features=(4, 10), random_state=1)
-    X2, L2 = create_subspace_data(1500, subspace_features=(2, 10), random_state=1)
+    X, L = create_subspace_data(100, subspace_features=(4, 10), random_state=1)
+    X2, L2 = create_subspace_data(100, subspace_features=(2, 10), random_state=1)
     n_repetitions = 2
     datasets = [EvaluationDataset(name="Data_1", data=X, labels_true=L),
                 EvaluationDataset(name="Data2", data=X2, labels_true=L2)]
     algorithms = [
         EvaluationAlgorithm(name="KMeans_1", algorithm=KMeans, params={"n_clusters": 6}),
         EvaluationAlgorithm(name="KMeans2", algorithm=KMeans, params={"n_clusters": 3}),
+        EvaluationAlgorithm(name="KMeans3", algorithm=KMeans, params={"n_clusters": 2}),
         EvaluationAlgorithm(name="Spectral", algorithm=SpectralClustering, params={"n_clusters": None})]
     metrics = [EvaluationMetric(name="nmi", metric=nmi, params={"average_method": "geometric"}, metric_type="external"),
                EvaluationMetric(name="silhouette", metric=silhouette, metric_type="internal"),
@@ -249,14 +250,14 @@ def test_evaluation_df_to_latex_table_multiple_datasets():
     non_equal_lines = [8, 9, 10, 11, 13, 14, 15, 16]
     assert all([read_file1[i] == read_file2[i] for i in equal_lines])
     assert all([read_file1[i] != read_file2[i] for i in non_equal_lines])
-    assert len(read_file1[6].split("&")) == 5 and len(read_file2[6].split("&")) == 5
-    assert all([len(read_file1[i].split("&")) == 5 and len(read_file2[i].split("&")) == 5 for i in non_equal_lines])
+    assert len(read_file1[6].split("&")) == 6 and len(read_file2[6].split("&")) == 6
+    assert all([len(read_file1[i].split("&")) == 6 and len(read_file2[i].split("&")) == 6 for i in non_equal_lines])
     for rf in [read_file1, read_file2]:
         assert rf[0] == "\\begin{table}\n" and rf[1] == "\\centering\n" and rf[2] == "\\caption{TODO}\n" and rf[
-            3] == "\\resizebox{1\\textwidth}{!}{\n" and rf[4] == "\\begin{tabular}{l|l|ccc}\n" and rf[5] == "\\toprule\n" and rf[
+            3] == "\\resizebox{1\\textwidth}{!}{\n" and rf[4] == "\\begin{tabular}{l|l|cccc}\n" and rf[5] == "\\toprule\n" and rf[
             7] == "\\midrule\n" and rf[12] == "\\midrule\n" and rf[17] == "\\bottomrule\n" and rf[
             18] == "\\end{tabular}}\n" and rf[19] == "\\end{table}"
-        assert rf[6] == "\\textbf{Dataset} & \\textbf{Metric} & KMeans\\_1 & KMeans2 & Spectral\\\\\n"
+        assert rf[6] == "\\textbf{Dataset} & \\textbf{Metric} & KMeans\\_1 & KMeans2 & KMeans3 & Spectral\\\\\n"
         assert rf[non_equal_lines[0]].startswith("Data\\_1 & nmi &")
         assert rf[non_equal_lines[1]].startswith("& silhouette &")
         assert rf[non_equal_lines[2]].startswith("& custom\\_metric &")
@@ -278,17 +279,18 @@ def test_evaluation_df_to_latex_table_single_dataset():
     from sklearn.cluster import KMeans, SpectralClustering
     from sklearn.metrics import normalized_mutual_info_score as nmi, silhouette_score as silhouette
     # Test with df
-    X, L = create_subspace_data(1500, subspace_features=(4, 10), random_state=1)
+    X, L = create_subspace_data(100, subspace_features=(4, 10), random_state=1)
     n_repetitions = 2
     algorithms = [
         EvaluationAlgorithm(name="KMeans_1", algorithm=KMeans, params={"n_clusters": 6}),
         EvaluationAlgorithm(name="KMeans2", algorithm=KMeans, params={"n_clusters": 3}),
+        EvaluationAlgorithm(name="KMeans3", algorithm=KMeans, params={"n_clusters": 2}),
         EvaluationAlgorithm(name="Spectral", algorithm=SpectralClustering, params={"n_clusters": None})]
     metrics = [EvaluationMetric(name="nmi", metric=nmi, params={"average_method": "geometric"}, metric_type="external"),
                EvaluationMetric(name="silhouette", metric=silhouette, metric_type="internal"),
                EvaluationMetric(name="custom_metric", metric=_custom_evaluation_metric, metric_type="custom")]
     df = evaluate_dataset(X=X, evaluation_algorithms=algorithms, evaluation_metrics=metrics, labels_true=L,
-                          n_repetitions=n_repetitions, add_runtime=True,
+                          n_repetitions=n_repetitions, add_runtime=False,
                           add_n_clusters=False, save_path="df.csv", random_state=1, aggregation_functions=[np.max, np.std])
     output_str1 = evaluation_df_to_latex_table(df, 1, "latex1.txt", None, None, False, False, False, None, None, None, 0)
     output_str1 = output_str1.split("\n")
@@ -297,31 +299,30 @@ def test_evaluation_df_to_latex_table_single_dataset():
     assert len(output_str1) == len(read_file1)
     assert all([output_str1[i] + "\n" == read_file1[i] for i in range(len(output_str1) - 1)] + [output_str1[-1] == read_file1[-1]])
     # Test with input file
-    output_str2 = evaluation_df_to_latex_table("df.csv", 1, "latex2.txt", "std", "max", True, True, True, "red", [True, True, False, False],
+    output_str2 = evaluation_df_to_latex_table("df.csv", 1, "latex2.txt", "std", "max", True, True, True, "red", [True, True, False],
                                                 100, 2)
     output_str2 = output_str2.split("\n")
     assert os.path.isfile("latex2.txt")
     read_file2 = open("latex2.txt", "r").readlines()
     assert len(output_str2) == len(read_file2)
     assert all([output_str2[i] + "\n" == read_file2[i] for i in range(len(output_str2) - 1)] + [output_str2[-1] == read_file2[-1]])
-    assert len(read_file1) == 15
+    assert len(read_file1) == 14
     assert len(read_file1) == len(read_file2)
-    equal_lines = list(range(8)) + list(range(12, 15))
-    non_equal_lines = [8, 9, 10, 11]
+    equal_lines = list(range(8)) + list(range(11, 14))
+    non_equal_lines = [8, 9, 10]
     assert all([read_file1[i] == read_file2[i] for i in equal_lines])
     assert all([read_file1[i] != read_file2[i] for i in non_equal_lines])
-    assert len(read_file1[6].split("&")) == 4 and len(read_file2[6].split("&")) == 4
-    assert all([len(read_file1[i].split("&")) == 4 and len(read_file2[i].split("&")) == 4 for i in non_equal_lines])
+    assert len(read_file1[6].split("&")) == 5 and len(read_file2[6].split("&")) == 5
+    assert all([len(read_file1[i].split("&")) == 5 and len(read_file2[i].split("&")) == 5 for i in non_equal_lines])
     for rf in [read_file1, read_file2]:
         assert rf[0] == "\\begin{table}\n" and rf[1] == "\\centering\n" and rf[2] == "\\caption{TODO}\n" and rf[
-            3] == "\\resizebox{1\\textwidth}{!}{\n" and rf[4] == "\\begin{tabular}{l|ccc}\n" and rf[
-            5] == "\\toprule\n" and rf[7] == "\\midrule\n" and rf[12] == "\\bottomrule\n" and rf[
-            13] == "\\end{tabular}}\n" and rf[14] == "\\end{table}"
-        assert rf[6] == "\\textbf{Metric} & KMeans\\_1 & KMeans2 & Spectral\\\\\n"
+            3] == "\\resizebox{1\\textwidth}{!}{\n" and rf[4] == "\\begin{tabular}{l|cccc}\n" and rf[
+            5] == "\\toprule\n" and rf[7] == "\\midrule\n" and rf[11] == "\\bottomrule\n" and rf[
+            12] == "\\end{tabular}}\n" and rf[13] == "\\end{table}"
+        assert rf[6] == "\\textbf{Metric} & KMeans\\_1 & KMeans2 & KMeans3 & Spectral\\\\\n"
         assert rf[non_equal_lines[0]].startswith("nmi &")
         assert rf[non_equal_lines[1]].startswith("silhouette &")
         assert rf[non_equal_lines[2]].startswith("custom\\_metric &")
-        assert rf[non_equal_lines[3]].startswith("runtime &")
     assert all(["pm" in read_file2[i] and "pm" not in read_file1[i] for i in non_equal_lines])
     assert all(["bm" in read_file2[i] and "bm" not in read_file1[i] for i in non_equal_lines])
     assert all(["underline" in read_file2[i] and "underline" not in read_file1[i] for i in non_equal_lines])

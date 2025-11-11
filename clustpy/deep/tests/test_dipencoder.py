@@ -10,7 +10,7 @@ from clustpy.deep.tests._helpers_for_tests import _get_dc_test_data, _get_dc_tes
 
 def test_dipencoder_estimator():
     # Ignore check_methods_subset_invariance due to numerical issues
-    check_clustpy_estimator(DipEncoder(2, pretrain_epochs=3, clustering_epochs=3),
+    check_clustpy_estimator(DipEncoder(3, pretrain_epochs=3, clustering_epochs=3),
                             ("check_complex_data", "check_methods_subset_invariance"))
 
 
@@ -24,7 +24,7 @@ def test_simple_dipencoder():
 def test_supervised_dipencoder():
     X, labels = _get_dc_test_data()
     nn = _get_dc_test_neuralnetwork(X.shape[1])
-    dipencoder = DipEncoder(3, batch_size=30, pretrain_epochs=3, clustering_epochs=3, random_state=1, neural_network=nn, embedding_size=3)
+    dipencoder = DipEncoder(3, batch_size=30, pretrain_epochs=3, clustering_epochs=3, random_state=1, neural_network=nn, embedding_size=4)
     assert not hasattr(dipencoder, "labels_")
     dipencoder.fit(X, labels)
     assert dipencoder.labels_.dtype == np.int32
@@ -72,6 +72,6 @@ def test_get_rec_loss_of_first_batch():
 def test_plot_dipencoder_obj(mock_fig):
     X, _ = _get_dc_test_data()
     nn = _get_dc_test_neuralnetwork(X.shape[1])
-    dipencoder = DipEncoder(3, batch_size=30, pretrain_epochs=1, clustering_epochs=1, random_state=1, neural_network=nn, embedding_size=3)
+    dipencoder = DipEncoder(3, batch_size=30, pretrain_epochs=1, clustering_epochs=1, random_state=1, neural_network=nn, embedding_size=4)
     dipencoder.fit(X)
     assert None == dipencoder.plot(X)

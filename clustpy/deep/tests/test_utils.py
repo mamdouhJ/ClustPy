@@ -63,7 +63,7 @@ def test_detect_device():
 def test_encode_batchwise():
     # Load dataset
     data, _ = _get_dc_test_data()
-    embedding_size = 3
+    embedding_size = 4
     dataloader = _get_test_dataloader(data, 30, False, False)
     autoencoder = _TestAutoencoder(data.shape[1], embedding_size)
     encoded = encode_batchwise(dataloader, autoencoder)
@@ -77,7 +77,7 @@ def test_predict_batchwise():
     # Load dataset
     data, _ = _get_dc_test_data()
     threshold = np.mean(np.sum(data, axis=1))
-    embedding_size = 5
+    embedding_size = 4
     dataloader = _get_test_dataloader(data, 30, False, False)
     autoencoder = _TestAutoencoder(data.shape[1], embedding_size)
     cluster_module = _TestClusterModule(threshold)
@@ -90,7 +90,7 @@ def test_predict_batchwise():
 def test_decode_batchwise():
     # Load dataset
     data, _ = _get_dc_test_data()
-    embedding_size = 3
+    embedding_size = 4
     dataloader = _get_test_dataloader(data, 30, False, False)
     autoencoder = _TestAutoencoder(data.shape[1], embedding_size)
     decoded = decode_batchwise(dataloader, autoencoder)
@@ -100,7 +100,7 @@ def test_decode_batchwise():
 def test_encode_decode_batchwise():
     # Load dataset
     data, _ = _get_dc_test_data()
-    embedding_size = 3
+    embedding_size = 4
     dataloader = _get_test_dataloader(data, 30, False, False)
     autoencoder = _TestAutoencoder(data.shape[1], embedding_size)
     encoded, decoded = encode_decode_batchwise(dataloader, autoencoder)

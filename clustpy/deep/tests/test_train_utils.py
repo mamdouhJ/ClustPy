@@ -26,7 +26,7 @@ def test_get_trained_network():
     # Get AE using the default AE class
     device = torch.device('cpu')
     ae = get_trained_network(trainloader=dataloader, optimizer_params={"lr": 1e-3}, n_epochs=3, device=device,
-                             optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=3)
+                             optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=4)
     # Check output of get_trained_network
     assert type(ae) is FeedforwardAutoencoder
     assert ae.fitted == True
@@ -39,9 +39,9 @@ def test_get_trained_network_with_custom_ae_class():
     # Get AE using a custom AE class
     device = torch.device('cpu')
     ae = get_trained_network(trainloader=dataloader, optimizer_params={"lr": 1e-3}, n_epochs=3, device=device,
-                             optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=3,
+                             optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=4,
                              neural_network_class=VariationalAutoencoder,
-                             neural_network_params={"layers": [data.shape[1], 10, 3]})
+                             neural_network_params={"layers": [data.shape[1], 10, 4]})
     # Check output of get_trained_network
     assert type(ae) is VariationalAutoencoder
     assert ae.fitted == True
@@ -53,12 +53,12 @@ def test_get_trained_network_with_custom_ae():
     dataloader = _get_test_dataloader(data, 30, True, False)
     # Get trained version of custom AE
     device = torch.device('cpu')
-    ae = FeedforwardAutoencoder(layers=[data.shape[1], 10, 3], work_on_copy=False)
+    ae = FeedforwardAutoencoder(layers=[data.shape[1], 10, 4], work_on_copy=False)
     assert ae.fitted == False
     encoder_0_params = ae.encoder.block[0].weight.data.detach().clone()
     decoder_0_params = ae.decoder.block[0].weight.data.detach().clone()
     ae_out = get_trained_network(trainloader=dataloader, optimizer_params={"lr": 1e-3}, n_epochs=3, device=device,
-                                 optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=3,
+                                 optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=4,
                                  neural_network=ae)
     # Check output of get_trained_network
     assert type(ae_out) is FeedforwardAutoencoder
@@ -74,14 +74,14 @@ def test_get_trained_network_with_custom_pretrained_ae():
     dataloader = _get_test_dataloader(data, 30, True, False)
     # Get same pretrained version out of get_trained_network
     device = torch.device('cpu')
-    ae = FeedforwardAutoencoder(layers=[data.shape[1], 10, 3], work_on_copy=True)
+    ae = FeedforwardAutoencoder(layers=[data.shape[1], 10, 4], work_on_copy=True)
     assert ae.fitted == False
     ae.fit(dataloader=dataloader, optimizer_params={"lr": 1e-3}, n_epochs=3, optimizer_class=torch.optim.Adam,
            ssl_loss_fn=torch.nn.MSELoss())
     encoder_0_params = ae.encoder.block[0].weight.data.detach().clone()
     decoder_0_params = ae.decoder.block[0].weight.data.detach().clone()
     ae_out = get_trained_network(trainloader=dataloader, optimizer_params={"lr": 1e-3}, n_epochs=3, device=device,
-                                 optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=3,
+                                 optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=4,
                                  neural_network=ae)
     # Check output of get_trained_network
     assert type(ae_out) is FeedforwardAutoencoder
@@ -102,7 +102,7 @@ def cleanup_autoencoders():
 @pytest.mark.usefixtures("cleanup_autoencoders")
 def test_get_trained_network_using_saved_ae():
     path = "autoencoder.ae"
-    layers = [33, 10, 3]
+    layers = [33, 10, 4]
     # Load dataset
     data, _ = _get_dc_test_data()
     dataloader = _get_test_dataloader(data, 30, True, False)
@@ -114,7 +114,7 @@ def test_get_trained_network_using_saved_ae():
            ssl_loss_fn=torch.nn.MSELoss(), model_path=path)
     assert ae.fitted is True
     ae2 = get_trained_network(trainloader=dataloader, optimizer_params={"lr": 1e-3}, n_epochs=3, device=device,
-                              optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=3,
+                              optimizer_class=torch.optim.Adam, ssl_loss_fn=torch.nn.MSELoss(), embedding_size=4,
                               neural_network=(FeedforwardAutoencoder, {"layers": layers}),
                               neural_network_weights=path)
     assert ae2.fitted is True

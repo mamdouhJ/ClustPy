@@ -44,7 +44,7 @@ def test_simple_acedec():
 
 
 def test_acedec_augmentation():
-    acedec = ACeDeC(3)
+    acedec = ACeDeC(10)
     _test_dc_algorithm_with_augmentation(acedec)
 
 

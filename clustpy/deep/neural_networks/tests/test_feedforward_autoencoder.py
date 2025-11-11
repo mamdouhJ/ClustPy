@@ -17,7 +17,7 @@ def test_feedforward_autoencoder():
     data, _ = _get_dc_test_data()
     batch_size = 30
     data_batch = torch.Tensor(data[:batch_size])
-    embedding_dim = 3
+    embedding_dim = 4
     autoencoder = FeedforwardAutoencoder(layers=[data.shape[1], 10, embedding_dim])
     # Test encoding
     embedded = autoencoder.encode(data_batch)
@@ -37,7 +37,7 @@ def test_feedforward_autoencoder():
 @pytest.mark.usefixtures("cleanup_autoencoder")
 def test_feedforward_autoencoder_load():
     data, _ = _get_dc_test_data()
-    embedding_dim = 3
+    embedding_dim = 4
     autoencoder = FeedforwardAutoencoder(layers=[data.shape[1], 10, embedding_dim])
     autoencoder.fit(n_epochs=3, optimizer_params={"lr": 1e-3}, data=data)
     autoencoder.save_parameters("autoencoder.ae")

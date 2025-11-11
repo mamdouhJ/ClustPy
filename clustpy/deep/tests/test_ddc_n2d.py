@@ -15,7 +15,7 @@ def test_ddc_estimator():
 
 def test_n2d_estimator():
     # Ignore check_methods_subset_invariance due to numerical issues
-    check_clustpy_estimator(N2D(3, pretrain_epochs=3, manifold_params={"perplexity": 5, "n_components": 1}),
+    check_clustpy_estimator(N2D(3, pretrain_epochs=3, manifold_params={"perplexity": 5, "n_components": 1}, initial_clustering_params={"n_init": 5}),
                             ("check_complex_data", "check_methods_subset_invariance"))
 
 
@@ -40,5 +40,5 @@ def test_simple_ddc():
 def test_simple_n2d():
     n2d = N2D(3)
     _test_dc_algorithm_simple(n2d, True, False)
-    n2d_isomap = N2D(3, manifold_class=Isomap, manifold_params={"n_components": 2, "n_neighbors": 7})
+    n2d_isomap = N2D(3, manifold_class=Isomap, manifold_params={"n_components": 2, "n_neighbors": 10})
     _test_dc_algorithm_simple(n2d_isomap, True, False)

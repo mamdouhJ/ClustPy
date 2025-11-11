@@ -8,7 +8,7 @@ def test_variational_autoencoder():
     data, _ = _get_dc_test_data()
     batch_size = 30
     data_batch = torch.Tensor(data[:batch_size])
-    embedding_dim = 3
+    embedding_dim = 4
     autoencoder = VariationalAutoencoder(layers=[data.shape[1], 10, embedding_dim])
     # Test encoding
     embedded_mean, embedded_var = autoencoder.encode(data_batch)

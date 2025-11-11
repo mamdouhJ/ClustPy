@@ -4,7 +4,7 @@ from clustpy.deep.tests._helpers_for_tests import _get_dc_test_data
 
 def test_stacked_autoencoder():
     data, _ = _get_dc_test_data()
-    embedding_dim = 3
+    embedding_dim = 4
     autoencoder = StackedAutoencoder(layers=[data.shape[1], 10, embedding_dim])
     # Test fitting
     assert autoencoder.fitted is False

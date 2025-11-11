@@ -856,6 +856,7 @@ class DipEncoder(_AbstractDeepClusteringAlgo):
         self.projection_thresholds_ = dipencoder_module.projection_thresholds_
         self.index_dict_ = index_dict
         self.neural_network_trained_ = neural_network
+        self.n_clusters_out_ = n_clusters
         self.set_n_featrues_in(X)
         return self
 
@@ -874,7 +875,7 @@ class DipEncoder(_AbstractDeepClusteringAlgo):
             The predicted labels
         """
         X_embed = self.transform(X)
-        labels_pred = _predict_using_thresholds(X_embed, self.projection_axes_, self.projection_thresholds_, self.n_clusters, self.index_dict_)
+        labels_pred = _predict_using_thresholds(X_embed, self.projection_axes_, self.projection_thresholds_, self.n_clusters_out_, self.index_dict_)
         return labels_pred.astype(np.int32)
 
     def plot(self, X: np.ndarray, edge_width: float = 0.2, show_legend: bool = True) -> None:

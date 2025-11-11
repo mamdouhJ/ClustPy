@@ -423,6 +423,8 @@ class N2D(_AbstractDeepClusteringAlgo):
     manifold_params : dict
         Parameters for the manifold execution. For example, perplexity can be changed for TSNE by setting manifold_params to {"n_components": 2, "perplexity": 25}.
         Check out e.g. sklearn.manifold.TSNE for more information. If None, it will be set to {"n_components": n_clusters} (default: None)
+    initial_clustering_params : dict
+        parameters for the GMM clustering class. If None, it will be set to {} (default: None)
     device : torch.device
         The device on which to perform the computations.
         If device is None then it will be automatically chosen: if a gpu is available the gpu with the highest amount of free memory will be chosen (default: None)
@@ -455,7 +457,7 @@ class N2D(_AbstractDeepClusteringAlgo):
                  ssl_loss_fn: Callable | torch.nn.modules.loss._Loss = mean_squared_error,
                  neural_network: torch.nn.Module | tuple = None, neural_network_weights: str = None,
                  embedding_size: int = 10, custom_dataloaders: tuple = None, manifold_class: TransformerMixin = TSNE,
-                 manifold_params: dict = None, device: torch.device = None,
+                 manifold_params: dict = None, initial_clustering_params: dict = None, device: torch.device = None,
                  random_state: np.random.RandomState | int = None):
         super().__init__(batch_size, neural_network, neural_network_weights, embedding_size, device, random_state)
         self.n_clusters = n_clusters
@@ -466,6 +468,7 @@ class N2D(_AbstractDeepClusteringAlgo):
         self.custom_dataloaders = custom_dataloaders
         self.manifold_class = manifold_class
         self.manifold_params = manifold_params
+        self.initial_clustering_params = initial_clustering_params
 
     def fit(self, X: np.ndarray, y: np.ndarray = None) -> 'N2D':
         """
@@ -484,7 +487,7 @@ class N2D(_AbstractDeepClusteringAlgo):
         self : N2D
             this instance of the N2D algorithm
         """
-        X, _, random_state, pretrain_optimizer_params, _, _ = self._check_parameters(X, y=y)
+        X, _, random_state, pretrain_optimizer_params, _, initial_clustering_params = self._check_parameters(X, y=y)
         manifold_params = {"n_components": self.n_clusters} if self.manifold_params is None else self.manifold_params
         _, labels, centers_ae, centers_manifold, neural_network, manifold = _manifold_based_sequential_dc(X, self.n_clusters,
                                                                                               self.batch_size,
@@ -498,7 +501,8 @@ class N2D(_AbstractDeepClusteringAlgo):
                                                                                               self.custom_dataloaders,
                                                                                               self.manifold_class,
                                                                                               manifold_params,
-                                                                                              GMM, {}, self.device,
+                                                                                              GMM, initial_clustering_params, 
+                                                                                              self.device,
                                                                                               random_state)
         self.labels_ = labels.astype(np.int32)
         self.cluster_centers_manifold_ = centers_manifold

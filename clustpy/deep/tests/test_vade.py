@@ -17,9 +17,9 @@ def test_simple_vade():
     torch.use_deterministic_algorithms(True)
     X, labels = _get_dc_test_data()
     X = (X - np.min(X)) / (np.max(X) - np.min(X))
-    nn = (VariationalAutoencoder, {"layers": [X.shape[1], 10, 3], "random_state": 42})
+    nn = (VariationalAutoencoder, {"layers": [X.shape[1], 10, 4], "random_state": 42})
     vade = VaDE(3, batch_size=30, pretrain_epochs=3, clustering_epochs=3,
-                initial_clustering_params={"n_init": 1, "covariance_type": "diag"}, random_state=42, embedding_size=3, neural_network=nn)
+                initial_clustering_params={"n_init": 1, "covariance_type": "diag"}, random_state=42, embedding_size=4, neural_network=nn)
     assert not hasattr(vade, "labels_")
     vade.fit(X)
     assert vade.labels_.dtype == np.int32
@@ -28,7 +28,7 @@ def test_simple_vade():
     assert X_embed.shape == (X.shape[0], vade.embedding_size)
     # Test if random state is working
     vade2 = VaDE(3, batch_size=30, pretrain_epochs=3, clustering_epochs=3,
-                 initial_clustering_params={"n_init": 1, "covariance_type": "diag"}, random_state=42, embedding_size=3, neural_network=nn)
+                 initial_clustering_params={"n_init": 1, "covariance_type": "diag"}, random_state=42, embedding_size=4, neural_network=nn)
     vade2.fit(X)
     assert np.array_equal(vade.labels_, vade2.labels_)
     assert np.array_equal(vade.cluster_centers_, vade2.cluster_centers_)
