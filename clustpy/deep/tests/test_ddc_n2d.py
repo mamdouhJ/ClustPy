@@ -9,13 +9,13 @@ from clustpy.deep.tests._helpers_for_tests import _test_dc_algorithm_simple
 
 def test_ddc_estimator():
     # Ignore check_methods_subset_invariance due to numerical issues
-    check_clustpy_estimator(DDC(pretrain_epochs=3, tsne_params={"perplexity": 5, "n_components": 1}),
+    check_clustpy_estimator(DDC(pretrain_epochs=3, tsne_params={"perplexity": 5}),
                             ("check_complex_data", "check_methods_subset_invariance"))
 
 
 def test_n2d_estimator():
     # Ignore check_methods_subset_invariance due to numerical issues
-    check_clustpy_estimator(N2D(3, pretrain_epochs=3, manifold_params={"perplexity": 5, "n_components": 1}, initial_clustering_params={"n_init": 5}),
+    check_clustpy_estimator(N2D(3, pretrain_epochs=3, manifold_params={"perplexity": 5}, initial_clustering_params={"covariance_type": "spherical"}),
                             ("check_complex_data", "check_methods_subset_invariance"))
 
 

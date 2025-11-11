@@ -5,7 +5,7 @@ from clustpy.utils.checks import check_clustpy_estimator
 
 
 def test_dipmeans_estimator():
-    check_clustpy_estimator(DipMeans(), ("check_complex_data"))
+    check_clustpy_estimator(DipMeans(debug=True), ("check_complex_data"))
 
 """
 Tests regarding the DipMeans object
