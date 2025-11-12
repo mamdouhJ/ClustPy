@@ -2014,7 +2014,7 @@ class ENRC(_AbstractDeepClusteringAlgo):
                  random_state: np.random.RandomState | int = None, custom_dataloaders: tuple = None,
                  augmentation_invariance: bool = False, final_reclustering: bool = True, debug: bool = False):
         super().__init__(batch_size, neural_network, neural_network_weights, embedding_size, device, random_state)
-        self.n_clusters = n_clusters.copy()
+        self.n_clusters = n_clusters
         self.pretrain_optimizer_params = pretrain_optimizer_params
         self.clustering_optimizer_params = clustering_optimizer_params
         self.pretrain_epochs = pretrain_epochs
@@ -2032,9 +2032,6 @@ class ENRC(_AbstractDeepClusteringAlgo):
         self.augmentation_invariance = augmentation_invariance
         self.final_reclustering = final_reclustering
         self.debug = debug
-
-        if len(self.n_clusters) < 2:
-            raise ValueError(f"n_clusters={n_clusters}, but should be <= 2.")
 
         if init in available_init_strategies():
             self.init = init
@@ -2063,10 +2060,16 @@ class ENRC(_AbstractDeepClusteringAlgo):
         self : ENRC
             returns the ENRC object
         """
+        if type(self.n_clusters) is int:
+            n_clusters = [self.n_clusters, 1]
+        else:
+            n_clusters = self.n_clusters.copy()
+        if len(n_clusters) < 2:
+            raise ValueError(f"n_clusters={n_clusters}, but should be >= 2.")
         X, _, random_state, pretrain_optimizer_params, clustering_optimizer_params, _ = self._check_parameters(X, y=y)
         cluster_labels, cluster_centers, V, m, betas, P, n_clusters, neural_network, cluster_labels_before_reclustering = _enrc(
             X=X,
-            n_clusters=self.n_clusters,
+            n_clusters=n_clusters,
             V=self.V,
             P=self.P,
             input_centers=self.input_centers,
@@ -2102,9 +2105,9 @@ class ENRC(_AbstractDeepClusteringAlgo):
         self.m = m
         self.P = P
         self.betas = betas
-        self.n_clusters = n_clusters
+        self.n_clusters_out_ = n_clusters
         self.neural_network_trained_ = neural_network
-        self.set_n_featrues_in(X.shape[1])
+        self.set_n_featrues_in(X)
         return self
 
     def predict(self, X: np.ndarray = None, use_P: bool = True,
@@ -2352,7 +2355,7 @@ class ACeDeC(ENRC):
                  random_state: np.random.RandomState | int = None, custom_dataloaders: tuple = None,
                  augmentation_invariance: bool = False,
                  final_reclustering: bool = True, debug: bool = False):
-        super().__init__([n_clusters, 1], V, P, input_centers,
+        super().__init__(n_clusters, V, P, input_centers,
                          batch_size, pretrain_optimizer_params, clustering_optimizer_params, pretrain_epochs,
                          clustering_epochs, tolerance_threshold, optimizer_class, ssl_loss_fn, clustering_loss_weight,
                          ssl_loss_weight, neural_network, neural_network_weights,

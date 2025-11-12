@@ -1,9 +1,8 @@
-from clustpy.deep import DKM, get_default_augmented_dataloaders
+from clustpy.deep import DKM
 from clustpy.deep.dkm import _get_default_alphas
-from clustpy.data import create_subspace_data, load_optdigits
-import torch
 import numpy as np
 from clustpy.utils.checks import check_clustpy_estimator
+from clustpy.deep.tests._helpers_for_tests import _test_dc_algorithm_simple, _test_dc_algorithm_with_augmentation
 
 
 def test_dkm_estimator():
@@ -13,30 +12,17 @@ def test_dkm_estimator():
 
 
 def test_simple_dkm():
-    torch.use_deterministic_algorithms(True)
-    X, labels = create_subspace_data(1000, subspace_features=(3, 50), random_state=1)
-    dkm = DKM(3, pretrain_epochs=3, alphas=(None, 0.1, 1), clustering_epochs=3, random_state=1)
-    assert not hasattr(dkm, "labels_")
-    dkm.fit(X)
-    assert dkm.labels_.dtype == np.int32
-    assert dkm.labels_.shape == labels.shape
-    X_embed = dkm.transform(X)
-    assert X_embed.shape == (X.shape[0], dkm.embedding_size)
-    # Test if random state is working
-    dkm2 = DKM(3, pretrain_epochs=3, alphas=(None, 0.1, 1), clustering_epochs=3, random_state=1)
-    dkm2.fit(X)
-    assert np.array_equal(dkm.labels_, dkm2.labels_)
-    assert np.allclose(dkm.cluster_centers_, dkm2.cluster_centers_, atol=1e-1)
+    dkm = DKM(3, alphas=(None, 0.1, 1))
+    dkm, dkm2 = _test_dc_algorithm_simple(dkm)
+    assert np.array_equal(dkm.cluster_centers_, dkm2.cluster_centers_)
     assert np.array_equal(dkm.dkm_labels_, dkm2.dkm_labels_)
-    assert np.allclose(dkm.dkm_cluster_centers_, dkm2.dkm_cluster_centers_, atol=1e-1)
+    assert np.array_equal(dkm.dkm_cluster_centers_, dkm2.dkm_cluster_centers_)
     # Test different alpha
-    dkm = DKM(3, pretrain_epochs=3, alphas=0.1, clustering_epochs=3, random_state=1)
-    dkm.fit(X)
-    assert dkm.labels_.dtype == np.int32
-    assert dkm.labels_.shape == labels.shape
-    # Test predict
-    labels_predict = dkm.predict(X)
-    assert np.array_equal(dkm.labels_, labels_predict)
+    dkm = DKM(3, alphas=0.1)
+    dkm, dkm2 = _test_dc_algorithm_simple(dkm)
+    assert np.array_equal(dkm.cluster_centers_, dkm2.cluster_centers_)
+    assert np.array_equal(dkm.dkm_labels_, dkm2.dkm_labels_)
+    assert np.array_equal(dkm.dkm_cluster_centers_, dkm2.dkm_cluster_centers_)
 
 
 def test_get_default_alphas():
@@ -46,14 +32,5 @@ def test_get_default_alphas():
 
 
 def test_dkm_augmentation():
-    torch.use_deterministic_algorithms(True)
-    dataset = load_optdigits()
-    data = dataset.images[:1000]
-    labels = dataset.target[:1000]
-    aug_dl, orig_dl = get_default_augmented_dataloaders(data)
-    clusterer = DKM(10, pretrain_epochs=3, alphas=(None, 0.1, 2), clustering_epochs=3, random_state=1,
-                    custom_dataloaders=[aug_dl, orig_dl], augmentation_invariance=True)
-    assert not hasattr(clusterer, "labels_")
-    clusterer.fit(data)
-    assert clusterer.labels_.dtype == np.int32
-    assert clusterer.labels_.shape == labels.shape
+    dkm = DKM(10, alphas=(None, 0.1, 2))
+    _test_dc_algorithm_with_augmentation(dkm)

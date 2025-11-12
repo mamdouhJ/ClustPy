@@ -298,15 +298,6 @@ def evaluate_dataset(X: np.ndarray, evaluation_algorithms: list, evaluation_metr
                             print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
                         labels_predicted_test = None
                 runtime = time.time() - start_time
-                if add_runtime:
-                    df.at[rep, (eval_algo.name, "runtime")] = runtime
-                    if not quiet:
-                        print("-- runtime: {0}".format(runtime))
-                if add_n_clusters:
-                    n_clusters = _get_n_clusters_from_algo(algo_obj)
-                    df.at[rep, (eval_algo.name, "n_clusters")] = n_clusters
-                    if not quiet:
-                        print("-- n_clusters: {0}".format(n_clusters))
                 # Optional: Save labels
                 if save_labels_path is not None:
                     save_labels_path_algo = None if save_labels_path is None else "{0}_{1}_{2}.{3}".format(
@@ -356,6 +347,15 @@ def evaluate_dataset(X: np.ndarray, evaluation_algorithms: list, evaluation_metr
                             if not quiet:
                                 print("Metric {0} raised an exception and will be skipped".format(eval_metric.name))
                                 print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+                if add_runtime:
+                    df.at[rep, (eval_algo.name, "runtime")] = runtime
+                    if not quiet:
+                        print("-- runtime: {0}".format(runtime))
+                if add_n_clusters:
+                    n_clusters = _get_n_clusters_from_algo(algo_obj)
+                    df.at[rep, (eval_algo.name, "n_clusters")] = n_clusters
+                    if not quiet:
+                        print("-- n_clusters: {0}".format(n_clusters))
                 if eval_algo.deterministic:
                     for element in range(1, n_repetitions):
                         if add_runtime:
@@ -379,7 +379,10 @@ def evaluate_dataset(X: np.ndarray, evaluation_algorithms: list, evaluation_metr
         if automatically_set_n_clusters:
             eval_algo.params["n_clusters"] = None
     for agg in aggregation_functions:
-        df.loc[agg.__name__] = agg(df.values, axis=0)
+        aggregated_results = agg(df.values, axis=0)
+        df.loc[agg.__name__] = aggregated_results
+        if not quiet:
+            print("-> Aggregation {0}: {1}".format(agg.__name__, aggregated_results))
     if save_path is not None:
         # Check if directory exists
         parent_directory = os.path.dirname(save_path)
@@ -605,8 +608,8 @@ def _get_data_and_labels_from_evaluation_dataset(data_input: np.ndarray, data_lo
 
 def evaluation_df_to_latex_table(df: pd.DataFrame | str, relevant_row : str | int = "mean", output_path: str = None, pm_row: str | int | None = "std", 
                                  bracket_row: str | int | None = None, best_in_bold: bool = True, second_best_underlined: bool = True, 
-                                 color_by_value: str = None, higher_is_better: list = None, multiplier: int | float | list | None = 100,
-                                 decimal_places: int = 1, color_min_max: tuple = (5, 70)) -> str:
+                                 third_best_dashed_underlined: bool = False, color_by_value: str = None, higher_is_better: list = None, 
+                                 multiplier: int | float | list | None = 100, decimal_places: int = 1, color_min_max: tuple = (5, 70)) -> str:
     """
     Convert the resulting dataframe of an evaluation into a latex table.
     Note that the latex package booktabs is required, so usepackage{booktabs} must be included in the latex file.
@@ -631,6 +634,9 @@ def evaluation_df_to_latex_table(df: pd.DataFrame | str, relevant_row : str | in
         Note, that the latex package bm is used, so usepackage{bm} must be included in the latex file (default: True)
     second_best_underlined : bool
         Print second-best value for each combination of dataset and metric underlined (default: True)
+    third_best_dashed_underlined : bool
+        Print third-best value for each combination of dataset and metric dashed underlined. 
+        Requires the ulem package, so usepackage{ulem} must be included in the latex file (default: False)
     color_by_value : str
         Define the color that should be used to indicate the difference between the values of the metrics.
         Uses colorcell, so usepackage{colortbl} or usepackage[table]{xcolor} must be included in the latex file.
@@ -767,6 +773,10 @@ def evaluation_df_to_latex_table(df: pd.DataFrame | str, relevant_row : str | in
                             (relevant_value == all_values_sorted[-2] and metric_is_higher_better) or (
                             relevant_value == all_values_sorted[1] and not metric_is_higher_better)):
                         value_write = "\\underline{" + value_write + "}"
+                    elif third_best_dashed_underlined and metric_is_higher_better is not None and (
+                        (relevant_value == all_values_sorted[-3] and metric_is_higher_better) or (
+                        relevant_value == all_values_sorted[2] and not metric_is_higher_better)):
+                        value_write = "\\dashuline{" + value_write + "}"
                     # Optional: Color cells by value difference
                     if color_by_value is not None and metric_is_higher_better is not None:
                         if all_values_sorted[-1] != all_values_sorted[0]:

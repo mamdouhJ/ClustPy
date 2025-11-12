@@ -1,8 +1,8 @@
 from clustpy.deep.neural_networks import FeedforwardAutoencoder
-from clustpy.data import create_subspace_data
 import torch
 import pytest
 import os
+from clustpy.deep.tests._helpers_for_tests import _get_dc_test_data
 
 
 @pytest.fixture
@@ -14,11 +14,11 @@ def cleanup_autoencoder():
 
 
 def test_feedforward_autoencoder():
-    data, _ = create_subspace_data(1000, subspace_features=(3, 50), random_state=1)
-    batch_size = 256
+    data, _ = _get_dc_test_data()
+    batch_size = 30
     data_batch = torch.Tensor(data[:batch_size])
-    embedding_dim = 10
-    autoencoder = FeedforwardAutoencoder(layers=[data.shape[1], 128, 64, embedding_dim])
+    embedding_dim = 4
+    autoencoder = FeedforwardAutoencoder(layers=[data.shape[1], 10, embedding_dim])
     # Test encoding
     embedded = autoencoder.encode(data_batch)
     assert embedded.shape == (batch_size, embedding_dim)
@@ -36,13 +36,13 @@ def test_feedforward_autoencoder():
 
 @pytest.mark.usefixtures("cleanup_autoencoder")
 def test_feedforward_autoencoder_load():
-    data, _ = create_subspace_data(100, subspace_features=(3, 50), random_state=1)
-    embedding_dim = 10
-    autoencoder = FeedforwardAutoencoder(layers=[data.shape[1], 128, 64, embedding_dim])
+    data, _ = _get_dc_test_data()
+    embedding_dim = 4
+    autoencoder = FeedforwardAutoencoder(layers=[data.shape[1], 10, embedding_dim])
     autoencoder.fit(n_epochs=3, optimizer_params={"lr": 1e-3}, data=data)
     autoencoder.save_parameters("autoencoder.ae")
     # Create second AE
-    autoencoder2 = FeedforwardAutoencoder(layers=[data.shape[1], 128, 64, embedding_dim])
+    autoencoder2 = FeedforwardAutoencoder(layers=[data.shape[1], 10, embedding_dim])
     autoencoder2.load_parameters("autoencoder.ae")
     # Test embedding
     data_torch = torch.Tensor(data)
