@@ -101,10 +101,11 @@ def _execute_two_means(X: np.ndarray, ids_in_each_cluster: list, cluster_id_to_s
     best_kmeans = None
     # Get random points in cluster as new centers
     if ids_in_cluster.shape[0] > n_split_trials:
-        random_centers = X[random_state.choice(ids_in_cluster, n_split_trials, replace=False)]
+        random_center_ids = random_state.choice(ids_in_cluster, size=n_split_trials, replace=False)
+        random_centers = X[random_center_ids]
     else:
         n_split_trials = ids_in_cluster.shape[0]
-        random_centers = X
+        random_centers = X[ids_in_cluster]
     # Calculate second new centers as: new2 = old - (new1 - old)
     adjusted_centers = old_center - (random_centers - old_center)
     # Get Kmeans result with minimum Kmeans-error
@@ -112,10 +113,10 @@ def _execute_two_means(X: np.ndarray, ids_in_each_cluster: list, cluster_id_to_s
         # Run kmeans with new centers
         tmp_centers[cluster_id_to_split] = random_centers[i]
         tmp_centers[-1] = adjusted_centers[i]
-        kmeans = KMeans(n_clusters=tmp_centers.shape[0], init=tmp_centers, n_init=1, random_state=random_state)
+        kmeans = KMeans(n_clusters=tmp_centers.shape[0], init=tmp_centers.copy(), n_init=1, random_state=random_state)
         kmeans.fit(X)
         # Check squared distances to find best kmeans result
-        if best_kmeans is None or kmeans.inertia_ < best_kmeans.inertia_:
+        if best_kmeans is None or best_kmeans.inertia_ - kmeans.inertia_ > 1e-6:
             best_kmeans = kmeans
     return best_kmeans.labels_, best_kmeans.cluster_centers_, best_kmeans.inertia_
 
