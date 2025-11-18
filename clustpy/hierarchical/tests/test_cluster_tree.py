@@ -160,3 +160,32 @@ def test_get_least_common_ancestor():
     assert np.array_equal(ancestors, [1, 4])
     ancestors = bct.get_least_common_ancestor(1, 1).labels
     assert np.array_equal(ancestors, [1])
+
+
+def test_export_sklearn_dendrogram():
+    bct = BinaryClusterTree()
+    bct.split_cluster(0)
+    bct.split_cluster(0)
+    bct.split_cluster(0)
+    bct.split_cluster(1)
+    bct.split_cluster(3)
+    dendogram = bct.export_sklearn_dendrogram()
+    assert dendogram.shape == (5, 4)
+    expected_dendogram = np.array([
+        [1, 4, 0., 2],
+        [3, 5, 0., 2],
+        [0, 7, 0., 3],
+        [8, 2, 0., 4],
+        [9, 6, 0., 6]
+        ])
+    assert np.array_equal(dendogram, expected_dendogram)
+    distance_func = lambda x, y: np.abs(len(x.labels) - len(y.labels))
+    dendogram = bct.export_sklearn_dendrogram(distance_func)
+    expected_dendogram = np.array([
+        [1, 4, 0, 2],
+        [3, 5, 0, 2],
+        [0, 7, 1, 3],
+        [8, 2, 2, 4],
+        [9, 6, 2, 6]
+        ])
+    assert np.array_equal(dendogram, expected_dendogram)

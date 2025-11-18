@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
+from collections.abc import Callable
 
 
 class _ClusterTreeNode:
@@ -279,7 +280,7 @@ class BinaryClusterTree:
         assert (
             new_cluster_id not in self.root_node_.labels
         ), "new_cluster_id ({0}) is already contained in the tree. Following labels are contained: {1}".format(
-            split_cluster_id, self.root_node_.labels
+            new_cluster_id, self.root_node_.labels
         )
         new_cluster_id = (
             len(self.root_node_.labels) if new_cluster_id is None else new_cluster_id
@@ -426,7 +427,7 @@ class BinaryClusterTree:
         """
         return str(self.root_node_)
 
-    def export_sklearn_dendrogram(self, distance_function=None) -> np.ndarray:
+    def export_sklearn_dendrogram(self, distance_function: Callable | None = None) -> np.ndarray:
         """
         Export the tree in the format expected by ``sklearn``/``scipy`` dendrograms
         (linkage matrix).  Each row corresponds to a non-leaf node and contains:
@@ -437,6 +438,11 @@ class BinaryClusterTree:
         * ``distance``: by default uniformly 0.0, can be overriden by providing a distance function on tree nodes.
         * ``num_nodes_in_subtree``: number of original leaf nodes beneath the
           node.
+
+        Parameters
+        ----------
+        distance_function : Callable | None
+            a specific distance function to use for the thrid column in the dendogram (default: None)
 
         Returns
         -------

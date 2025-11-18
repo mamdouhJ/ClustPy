@@ -1,5 +1,5 @@
 import numpy as np
-from clustpy.metrics.clustering_metrics import _check_number_of_points
+from clustpy.metrics._utils import _check_number_of_points
 from clustpy.metrics.pair_counting_scores import PairCountingScores, _f1_score, _recall_score, _precision_score, \
     _rand_score, _jaccard_score
 from sklearn.metrics import normalized_mutual_info_score as nmi
