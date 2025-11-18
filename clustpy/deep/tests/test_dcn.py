@@ -1,9 +1,9 @@
-from clustpy.deep import DCN, get_default_augmented_dataloaders
+from clustpy.deep import DCN
 from clustpy.deep.dcn import _compute_centroids
-from clustpy.data import create_subspace_data, load_optdigits
 import torch
 import numpy as np
 from clustpy.utils.checks import check_clustpy_estimator
+from clustpy.deep.tests._helpers_for_tests import _test_dc_algorithm_simple, _test_dc_algorithm_with_augmentation
 
 
 def test_dcn_estimator():
@@ -13,25 +13,11 @@ def test_dcn_estimator():
 
 
 def test_simple_dcn():
-    torch.use_deterministic_algorithms(True)
-    X, labels = create_subspace_data(1000, subspace_features=(3, 50), random_state=1)
-    dcn = DCN(3, pretrain_epochs=3, clustering_epochs=3, random_state=1)
-    assert not hasattr(dcn, "labels_")
-    dcn.fit(X)
-    assert dcn.labels_.dtype == np.int32
-    assert dcn.labels_.shape == labels.shape
-    X_embed = dcn.transform(X)
-    assert X_embed.shape == (X.shape[0], dcn.embedding_size)
-    # Test if random state is working
-    dcn2 = DCN(3, pretrain_epochs=3, clustering_epochs=3, random_state=1)
-    dcn2.fit(X)
-    assert np.array_equal(dcn.labels_, dcn2.labels_)
+    dcn = DCN(3)
+    dcn, dcn2 = _test_dc_algorithm_simple(dcn)
     assert np.allclose(dcn.cluster_centers_, dcn2.cluster_centers_, atol=1e-1)
     assert np.array_equal(dcn.dcn_labels_, dcn2.dcn_labels_)
     assert np.allclose(dcn.dcn_cluster_centers_, dcn2.dcn_cluster_centers_, atol=1e-1)
-    # Test predict
-    labels_predict = dcn.predict(X)
-    assert np.array_equal(dcn.labels_, labels_predict)
 
 
 def test_compute_centroids():
@@ -48,14 +34,5 @@ def test_compute_centroids():
 
 
 def test_dcn_augmentation():
-    torch.use_deterministic_algorithms(True)
-    dataset = load_optdigits()
-    data = dataset.images[:1000]
-    labels = dataset.target[:1000]
-    aug_dl, orig_dl = get_default_augmented_dataloaders(data)
-    clusterer = DCN(10, pretrain_epochs=3, clustering_epochs=3, random_state=1,
-                    custom_dataloaders=[aug_dl, orig_dl], augmentation_invariance=True)
-    assert not hasattr(clusterer, "labels_")
-    clusterer.fit(data)
-    assert clusterer.labels_.dtype == np.int32
-    assert clusterer.labels_.shape == labels.shape
+    dcn = DCN(10)
+    _test_dc_algorithm_with_augmentation(dcn)

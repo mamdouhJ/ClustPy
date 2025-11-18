@@ -61,11 +61,13 @@ def test_mixed_convolutional_autoencoder():
 
 
 def test_convolutional_autoencoder_in_deep_clustering():
-    data = np.random.random((512, 3, 32, 32))
-    embedding_dim = 10
+    data = np.random.random((100, 3, 32, 32))
+    embedding_dim = 4
     # Test combining the Convolutional Autoencoder with DCN
     autoencoder = ConvolutionalAutoencoder(32, [512, embedding_dim])
-    dcn = DCN(3, pretrain_epochs=1, clustering_epochs=3, neural_network=autoencoder, random_state=1)
+    dcn = DCN(3, pretrain_epochs=1, clustering_epochs=3, neural_network=autoencoder, random_state=1, embedding_size=embedding_dim)
     dcn.fit(data)
     assert dcn.labels_.dtype == np.int32
-    assert dcn.labels_.shape == (512,)
+    assert dcn.labels_.shape == (100,)
+    X_embed = dcn.transform(data)
+    assert X_embed.shape == (data.shape[0], dcn.embedding_size)

@@ -117,6 +117,7 @@ class _AbstractAutoencoder(torch.nn.Module):
         self.work_on_copy = work_on_copy
         self.random_state = random_state
         self.fitted = False
+        self.allow_nd_input = False
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -442,7 +443,7 @@ class _AbstractAutoencoder(torch.nn.Module):
         """
         if not self.fitted:
             raise ValueError("The autoencoder is not fitted yet. Rnu fit() first.")
-        X, _, _ = check_parameters(X, allow_size_1=True)
+        X, _, _ = check_parameters(X, allow_size_1=True, allow_nd=self.allow_nd_input)
         device = get_device_from_module(self)
         torch_data = torch.from_numpy(X).float().to(device)
         embedded_data = self.encode(torch_data)

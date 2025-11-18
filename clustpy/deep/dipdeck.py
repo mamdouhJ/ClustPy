@@ -566,6 +566,10 @@ class _DipDECK_Module(torch.nn.Module):
             if self.n_clusters_current == 1:
                 print("Abort DipDECK: Only one cluster left")
                 break
+        # Update labels using the current (final) centers
+        cluster_labels_cpu = np.argmin(cdist(embedded_centers_cpu, embedded_data), axis=0).astype(np.int32)
+        self.labels = torch.from_numpy(cluster_labels_cpu).int()
+        # End
         tbar.close()
         if debug:
             for merge_message in merges_log:
@@ -759,7 +763,7 @@ class DipDECK(_AbstractDeepClusteringAlgo):
         self.n_clusters_ = dipdeck_module.n_clusters_current
         self.cluster_centers_ = dipdeck_module.cluster_centers.detach().cpu().numpy()
         self.neural_network_trained_ = neural_network
-        self.set_n_featrues_in(X.shape[1])
+        self.set_n_featrues_in(X)
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:

@@ -126,7 +126,7 @@ class DEN(_AbstractDeepClusteringAlgo):
             the size of each group,
             the embedding size
         """
-        assert (type(self.group_size) is list and np.sum(self.group_size) == self.embedding_size) or (type(self.group_size) is int and self.group_size * self.n_clusters == self.embedding_size) or (self.group_size is None and self.embedding_size is not None) or (self.embedding_size is None and self.group_size is not None), "Either group_size or embedding_size must be None and the other parameter must be defined. You set group_size = {0} and embedding_size = {1}".format(self.group_size, self.embedding_size)
+        assert (type(self.group_size) is list and np.sum(self.group_size) == self.embedding_size) or (type(self.group_size) is int and self.group_size * self.n_clusters == self.embedding_size) or (self.group_size is None and self.embedding_size is not None) or (self.embedding_size is None and self.group_size is not None), "Either group_size or embedding_size must be None or group_size must be set in accordance to the embedding size. You set group_size = {0} and embedding_size = {1}".format(self.group_size, self.embedding_size)
         if self.embedding_size is None:
             group_size = self.group_size
             if type(group_size) is int:
@@ -311,5 +311,5 @@ class DEN(_AbstractDeepClusteringAlgo):
         self.labels_ = kmeans.labels_
         self.cluster_centers_ = kmeans.cluster_centers_
         self.neural_network_trained_ = neural_network
-        self.set_n_featrues_in(X.shape[1])
+        self.set_n_featrues_in(X)
         return self

@@ -64,6 +64,8 @@ def test_confusion_matrix_object():
     labels_pred = np.array([0, 0, -1, -1, 2, 2, -1, 3])
     cm = ConfusionMatrix(labels_true, labels_pred)
     expected_cm = np.array([[1, 0, 0, 0, 1],
+                            [0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0],
                             [0, 1, 0, 1, 0],
                             [0, 1, 0, 1, 0],
                             [2, 0, 0, 0, 0]])

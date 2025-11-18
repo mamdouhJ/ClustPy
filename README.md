@@ -147,19 +147,22 @@ Remove clustpy via pip to avoid ambiguities during development, e.g., when chang
 ## Other implementations
 
 - Metrics
-    - Confusion Matrix [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.confusion_matrix.ConfusionMatrix)]
-    - Fair Normalized Mutual Information (FNMI) [[Publication](https://dl.acm.org/doi/abs/10.1145/2808797.2809344)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.clustering_metrics.fair_normalized_mutual_information)]
+    - External Metrics
+        - Confusion Matrix [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.confusion_matrix.ConfusionMatrix)]
+        - Fair Normalized Mutual Information (FNMI) [[Publication](https://dl.acm.org/doi/abs/10.1145/2808797.2809344)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.external_clustering_metrics.fair_normalized_mutual_information)]
+        - Information-Theoretic External Cluster-Validity Measure (DOM) [[Publication](https://dl.acm.org/doi/10.5555/2073876.2073893)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.external_clustering_metrics.information_theoretic_external_cluster_validity_measure)]
+        - Pair Counting Scores (f1, rand, jaccard, recall, precision) [[Publication](https://link.springer.com/article/10.1007/s10115-008-0150-6)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.pair_counting_scores.PairCountingScores)]
+        - Purity [[Publication](https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-clustering-1.html)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.external_clustering_metrics.purity)]
+        - Unsupervised Clustering Accuracy [[Publication](https://ieeexplore.ieee.org/abstract/document/5454426)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.external_clustering_metrics.unsupervised_clustering_accuracy)]
+        - Variation of information [[Publication](https://link.springer.com/chapter/10.1007/978-3-540-45167-9_14)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.external_clustering_metrics.variation_of_information)]
+    - Internal Metrics
+        - Clustering Validation Index based on Nearest Neighbors (CVNN) [[Publication](https://ieeexplore.ieee.org/document/6341117)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.internal_clustering_metrics.cvnn_score)]
     - Hierarchical Metrics
         - Dendrogram Purity [[Publication](https://dl.acm.org/doi/abs/10.1145/1102351.1102389)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.hierarchical_metrics.dendrogram_purity)]
         - Leaf Purity [[Publication](https://link.springer.com/article/10.1007/s41019-020-00134-0)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.hierarchical_metrics.leaf_purity)]
-    - Information-Theoretic External Cluster-Validity Measure (DOM) [[Publication](https://dl.acm.org/doi/10.5555/2073876.2073893)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.clustering_metrics.information_theoretic_external_cluster_validity_measure)]
-    - Pair Counting Scores (f1, rand, jaccard, recall, precision) [[Publication](https://link.springer.com/article/10.1007/s10115-008-0150-6)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.pair_counting_scores.PairCountingScores)]
-    - Purity [[Publication](https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-clustering-1.html)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.clustering_metrics.purity)]
     - Scores for multiple labelings (see alternative clustering algorithms)
         - Multiple Labelings Confusion Matrix [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.multipe_labelings_scoring.MultipleLabelingsConfusionMatrix)]
         - Multiple Labelings Pair Counting Scores [[Publication](https://ieeexplore.ieee.org/abstract/document/6228189)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.multipe_labelings_scoring.MultipleLabelingsPairCountingScores)]
-    - Unsupervised Clustering Accuracy [[Publication](https://ieeexplore.ieee.org/abstract/document/5454426)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.clustering_metrics.unsupervised_clustering_accuracy)]
-    - Variation of information [[Publication](https://link.springer.com/chapter/10.1007/978-3-540-45167-9_14)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.metrics.html#clustpy.metrics.clustering_metrics.variation_of_information)]
 - Utils
     - Automatic evaluation methods [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.utils.html#module-clustpy.utils.evaluation)]
     - Hartigans Dip-test [[Publication](https://www.jstor.org/stable/2241144)] [[Docs](https://clustpy.readthedocs.io/en/latest/clustpy.utils.html#module-clustpy.utils.diptest)]
@@ -357,8 +360,11 @@ Benchmarking Deep Clustering Algorithms With ClustPy.
 - [Application of Deep Clustering Algorithms](https://dl.acm.org/doi/abs/10.1145/3583780.3615290) (CIKM 10/2023)
 - [Benchmarking Deep Clustering Algorithms With ClustPy](https://ieeexplore.ieee.org/document/10411702) (ICDMW 12/2023)
 - [Data with Density-Based Clusters: A Generator for Systematic Evaluation of Clustering Algorithms](https://link.springer.com/chapter/10.1007/978-3-031-70368-3_1) (ECML PKDD 08/2024)
-- [Statistical Modeling of Univariate Multimodal Data](https://arxiv.org/abs/2412.15894) (arXiv 12/2024)
-- [SHADE: Deep Density-based Clustering](https://arxiv.org/pdf/2410.06265) (ICDM 12/2024)
+- [SHADE: Deep Density-based Clustering](https://ieeexplore.ieee.org/abstract/document/10884477) (ICDM 12/2024)
 - [Dying Clusters Is All You Need - Deep Clustering With an Unknown Number of Clusters](https://ieeexplore.ieee.org/document/10917902) (ICDMW 12/2024)
 - [A Symmetric Purity Measure for Clustering Comparison](https://link.springer.com/article/10.1007/s40745-025-00594-z) (Annals of Data Science 04/2025)
 - [Breaking the Reclustering Barrier in Centroid-based Deep Clustering](https://openreview.net/forum?id=r01fcKhzT5) (ICLR 04/2025)
+- [DCMatch - Identify Matching Architectures in Deep Clustering Through Meta-learning](https://link.springer.com/chapter/10.1007/978-981-96-8170-9_17) (PAKDD 06/2025)
+- [Going Offline: An Evaluation of the Offline Phase in Stream Clustering](https://link.springer.com/chapter/10.1007/978-3-032-06109-6_18) (ECML PKDD 09/2025)
+- [Statistical Modeling of Univariate Multimodal Data](https://www.sciencedirect.com/science/article/pii/S0925231225013918) (Neurocomputing 10/2025)
+- [A Study of Deep Clustering in Spike Sorting](https://link.springer.com/article/10.1007/s12021-025-09751-4) (Neuroinformatics 10/2025)

@@ -99,7 +99,7 @@ class _AbstractDeepClusteringAlgo(TransformerMixin, ClusterMixin, BaseEstimator)
             The embedded data set
         """
         check_is_fitted(self, ["labels_", "neural_network_trained_", "n_features_in_"])
-        X, _, _ = check_parameters(X, allow_size_1=True, estimator_obj=self)
+        X, _, _ = check_parameters(X, allow_size_1=True, allow_nd=self.neural_network_trained_.allow_nd_input, estimator_obj=self)
         if X.shape[1] != self.n_features_in_:
             raise ValueError(
             f"X has {X.shape[1]} features, but {self.__class__.__name__} "
@@ -125,7 +125,7 @@ class _AbstractDeepClusteringAlgo(TransformerMixin, ClusterMixin, BaseEstimator)
             this instance of the _AbstractDeepClusteringAlgo
         """
         self.neural_network_trained_ = self.neural_network # placeholder
-        self.set_n_featrues_in(X.shape[1])
+        self.set_n_featrues_in(X)
         return self
 
     def fit_transform(self, X: np.ndarray, y: np.ndarray=None):
@@ -176,14 +176,14 @@ class _AbstractDeepClusteringAlgo(TransformerMixin, ClusterMixin, BaseEstimator)
         predicted_labels = predicted_labels.astype(np.int32)
         return predicted_labels
 
-    def set_n_featrues_in(self, n_features: int) -> None:
+    def set_n_featrues_in(self, X: np.ndarray) -> None:
         """
         Set the attribute n_features_in_ for this deep clustering algorithm and set fitted to true for the underlying neural network.
 
         Parameters
         ----------
-        n_features: int
-            The number of input features
+        X: np.ndarray
+            The input data
         """
-        self.n_features_in_ = n_features
+        self.n_features_in_ = X.shape[1]
         self.neural_network_trained_.fitted = True

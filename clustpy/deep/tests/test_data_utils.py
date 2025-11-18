@@ -1,15 +1,17 @@
 from clustpy.deep._data_utils import _ClustpyDataset, get_dataloader, get_train_and_test_dataloader, \
     get_default_augmented_dataloaders, get_data_dim_from_dataloader
-from clustpy.data import create_subspace_data, load_optdigits
+from clustpy.data import load_optdigits
 import torch
 import torchvision
 import numpy as np
 import os
 import pytest
+from clustpy.deep.tests._helpers_for_tests import _get_dc_test_data
+
 
 
 def test_ClustpyDataset():
-    data, labels = create_subspace_data(250, subspace_features=(3, 50), random_state=1)
+    data, labels = _get_dc_test_data()
     data_torch = torch.from_numpy(data)
     labels_torch = torch.from_numpy(labels)
     dataset = _ClustpyDataset(data_torch, labels_torch)
@@ -19,10 +21,10 @@ def test_ClustpyDataset():
     assert dataset[0][0] == 0
     assert torch.equal(dataset[0][1], data_torch[0])
     assert dataset[0][2] == labels_torch[0]
-    # Test 100th sample
-    assert dataset[100][0] == 100
-    assert torch.equal(dataset[100][1], data_torch[100])
-    assert dataset[100][2] == labels_torch[100]
+    # Test 20th sample
+    assert dataset[20][0] == 20
+    assert torch.equal(dataset[20][1], data_torch[20])
+    assert dataset[20][2] == labels_torch[20]
 
 
 def test_ClustpyDataset_with_augmentation():
@@ -65,37 +67,37 @@ def test_ClustpyDataset_with_augmentation():
 
 
 def test_get_datalaoder():
-    data, labels = create_subspace_data(250, subspace_features=(3, 50), random_state=1)
+    data, labels = _get_dc_test_data()
     data_torch = torch.from_numpy(data).float()
     labels_torch = torch.from_numpy(labels).float()
     # Numpy entry, shuffle=False and no additional input
-    dataloader = get_dataloader(data, shuffle=False, batch_size=100)
+    dataloader = get_dataloader(data, shuffle=False, batch_size=30)
     entry = next(iter(dataloader))
     assert len(entry) == 2
-    assert torch.equal(entry[0], torch.arange(0, 100))
-    assert torch.equal(entry[1], data_torch[:100])
+    assert torch.equal(entry[0], torch.arange(0, 30))
+    assert torch.equal(entry[1], data_torch[:30])
     # Torch entry, shuffle=False and additional input
-    dataloader = get_dataloader(data_torch, shuffle=False, batch_size=100, additional_inputs=[labels])
+    dataloader = get_dataloader(data_torch, shuffle=False, batch_size=30, additional_inputs=[labels])
     entry = next(iter(dataloader))
     assert len(entry) == 3
-    assert torch.equal(entry[0], torch.arange(0, 100))
-    assert torch.equal(entry[1], data_torch[:100])
-    assert torch.equal(entry[2], labels_torch[:100])
+    assert torch.equal(entry[0], torch.arange(0, 30))
+    assert torch.equal(entry[1], data_torch[:30])
+    assert torch.equal(entry[2], labels_torch[:30])
     # Numpy entry, shuffle=True and no additional input
-    dataloader = get_dataloader(data, shuffle=True, batch_size=200)
+    dataloader = get_dataloader(data, shuffle=True, batch_size=100)
     entry = next(iter(dataloader))
     assert len(entry) == 2
-    assert entry[0].shape[0] == 200
-    assert not torch.equal(entry[0], torch.arange(0, 200))
-    assert entry[1].shape == (200, data.shape[1])
+    assert entry[0].shape[0] == 100
+    assert not torch.equal(entry[0], torch.arange(0, 100))
+    assert entry[1].shape == (100, data.shape[1])
     assert torch.equal(entry[1], data_torch[entry[0]])
 
 
 def test_get_data_dim_from_dataloader():
-    data, labels = create_subspace_data(20, subspace_features=(3, 50), random_state=1)
+    data, _ = _get_dc_test_data()
     dataloader = get_dataloader(data, shuffle=False, batch_size=10)
-    assert get_data_dim_from_dataloader(dataloader) == 53
-    data, labels = create_subspace_data(20, subspace_features=(1, 10), random_state=1)
+    assert get_data_dim_from_dataloader(dataloader) == 33
+    data = np.random.rand(20, 11)
     dataloader = get_dataloader(data, shuffle=False, batch_size=10)
     assert get_data_dim_from_dataloader(dataloader) == 11
 
@@ -115,25 +117,25 @@ def cleanup_dataloaders():
 def test_get_train_and_test_dataloader():
     filename1 = "trainloader.pt"
     filename2 = "testloader.pt"
-    data, _ = create_subspace_data(250, subspace_features=(3, 50), random_state=1)
-    trainloader, testloader, bs = get_train_and_test_dataloader(data, 64, None)
-    assert bs == 64
+    data, _ = _get_dc_test_data()
+    trainloader, testloader, bs = get_train_and_test_dataloader(data, 30, None)
+    assert bs == 30
     custom_dataloader = (trainloader, testloader)
-    trainloader2, testloader2, bs = get_train_and_test_dataloader(data, 128, custom_dataloader)
+    trainloader2, testloader2, bs = get_train_and_test_dataloader(data, 60, custom_dataloader)
     assert trainloader == trainloader2
     assert testloader == testloader2
-    assert bs == 64
+    assert bs == 30
     torch.save(trainloader, filename1)
     torch.save(testloader, filename2)
     custom_dataloader = (filename1, filename2)
-    trainloader2, testloader2, bs = get_train_and_test_dataloader(data, 128, custom_dataloader)
+    trainloader2, testloader2, bs = get_train_and_test_dataloader(data, 60, custom_dataloader)
     assert trainloader != trainloader2
     assert testloader != testloader2
-    assert bs == 64
+    assert bs == 30
     # Check values in trainloader
     iter_trainloader = iter(trainloader)
     iter_trainloader2 = iter(trainloader2)
-    for i in range(4):  # 250 samples and batchsize of 64 => 4 iterations
+    for i in range(4):  # 100 samples and batchsize of 30 => 4 iterations
         torch.manual_seed(123)  # Seed is required due to shuffle
         entry_train1 = next(iter_trainloader)
         torch.manual_seed(123)
@@ -147,10 +149,10 @@ def test_get_train_and_test_dataloader():
         assert np.array_equal(entry_test1[0], entry_test2[0])
         assert np.array_equal(entry_test1[1], entry_test2[1])
     # Change batch_size of testloader
-    testloader = get_dataloader(data, 60, False, False)
+    testloader = get_dataloader(data, 80, False, False)
     custom_dataloader = (trainloader, testloader)
-    trainloader2, testloader2, bs = get_train_and_test_dataloader(data, 64, custom_dataloader)
-    assert bs == 64
+    trainloader2, testloader2, bs = get_train_and_test_dataloader(data, 30, custom_dataloader)
+    assert bs == 30
 
 
 def test_get_default_augmented_dataloaders():

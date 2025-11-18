@@ -43,7 +43,7 @@ class _Dip_Module(torch.nn.Module):
         super(_Dip_Module, self).__init__()
         self.projection_axes = torch.nn.Parameter(torch.from_numpy(projection_axes).float())
 
-    def forward(self, X: torch.Tensor, projection_axis_index: int) -> torch.Tensor:
+    def forward(self, X: torch.Tensor, projection_axis_index: int) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         """
         Calculate and return the Dip-value of the input data projected onto the projection axes at the specified index.
         The actual calculations will happen within the _Dip_Gradient class.
@@ -57,11 +57,11 @@ class _Dip_Module(torch.nn.Module):
 
         Returns
         -------
-        dip_value : torch.Tensor
-            The Dip-value
+        tuple : (torch.Tensor, torch.Tensor, torch.Tensor)
+            The Dip-value, the modal inveral ids, the modal triangle ids
         """
-        dip_value = _Dip_Gradient.apply(X, self.projection_axes[projection_axis_index])
-        return dip_value
+        dip_value, modal_interval, modal_triangle = _Dip_Gradient.apply(X, self.projection_axes[projection_axis_index])
+        return dip_value, modal_interval, modal_triangle
 
 
 class _Dip_Gradient(torch.autograd.Function):
@@ -73,7 +73,7 @@ class _Dip_Gradient(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx: torch.autograd.function._ContextMethodMixin, X: torch.Tensor,
-                projection_vector: torch.Tensor) -> torch.Tensor:
+                projection_vector: torch.Tensor) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         """
         Execute the forward method which will return the Dip-value of the input data set projected onto the specified projection axis.
 
@@ -88,25 +88,27 @@ class _Dip_Gradient(torch.autograd.Function):
 
         Returns
         -------
-        torch_dip : torch.Tensor
-            The Dip-value
+        tuple : (torch.Tensor, torch.Tensor, torch.Tensor)
+            The Dip-value, the modal inveral ids, the modal triangle ids
         """
         # Project data onto projection vector
         X_proj = torch.matmul(X, projection_vector)
         # Sort data
         sorted_indices = X_proj.argsort()
         # Calculate dip
-        sorted_data = X_proj[sorted_indices].detach().cpu().numpy()
-        dip_value, _, modal_triangle = dip_test(sorted_data, is_data_sorted=True, just_dip=False)
-        torch_dip = torch.tensor(dip_value)
+        sorted_data = X_proj[sorted_indices]
+        sorted_data_numpy = sorted_data.detach().cpu().numpy()
+        dip_value, modal_interval, modal_triangle = dip_test(sorted_data_numpy, is_data_sorted=True, just_dip=False)
+        dip_value_torch = torch.tensor(dip_value)
+        modal_interval_torch = torch.tensor(modal_interval, dtype=torch.long)
+        modal_triangle_torch = torch.tensor(modal_triangle, dtype=torch.long) 
         # Save parameters for backward
-        ctx.save_for_backward(X, X_proj, sorted_indices, projection_vector,
-                              torch.tensor(modal_triangle, dtype=torch.long), torch_dip)
-        return torch_dip
+        ctx.save_for_backward(X, X_proj, sorted_indices, projection_vector, modal_triangle_torch)
+        return dip_value_torch, sorted_indices[modal_interval_torch], sorted_indices[modal_triangle_torch]
 
     @staticmethod
-    def backward(ctx: torch.autograd.function._ContextMethodMixin, grad_output: torch.Tensor) -> (
-            torch.Tensor, torch.Tensor):
+    def backward(ctx: torch.autograd.function._ContextMethodMixin, grad_output_dip: torch.Tensor, grad_output_modal_interval: torch.Tensor, 
+                 grad_output_modal_triangle: torch.Tensor) -> (torch.Tensor, torch.Tensor):
         """
         Execute the backward method which will return the gradients of the Dip-value calculated in the forward method.
         First gradient corresponds the data, second gradient corresponds to the projection axis.
@@ -124,16 +126,11 @@ class _Dip_Gradient(torch.autograd.Function):
             The gradient of the Dip-value with respect to the data and with respect to the projection axis
         """
         # Load parameters from forward
-        X, X_proj, sorted_indices, projection_vector, modal_triangle, dip_value = ctx.saved_tensors
+        X, X_proj, sorted_indices, projection_vector, modal_triangle = ctx.saved_tensors
         device = detect_device(projection_vector.get_device())
         if -1 in modal_triangle:
             return torch.zeros((X_proj.shape[0], projection_vector.shape[0])).to(device), torch.zeros(
                 projection_vector.shape).to(device)
-        # Grad_output equals gradient of outer operations. Update grad_output to consider dip
-        if grad_output > 0:
-            grad_output = grad_output * dip_value * 4
-        else:
-            grad_output = grad_output * (0.25 - dip_value) * 4
         # Calculate the partial derivative for all dimensions
         data_index_i1, data_index_i2, data_index_i3 = sorted_indices[modal_triangle]
         # Get A and c
@@ -154,7 +151,7 @@ class _Dip_Gradient(torch.autograd.Function):
         tmp_vec = torch.ones(X.shape).to(device) * projection_vector
         gradient_x = tmp_vec * gradient_x_tmp.reshape(-1, 1)
         # Return gradients
-        return grad_output * gradient_x, grad_output * gradient_proj
+        return grad_output_dip * gradient_x, grad_output_dip * gradient_proj
 
 
 def _calculate_partial_derivative_x(X_proj, data_index_i1: torch.long, data_index_i2: torch.long,
@@ -523,22 +520,25 @@ class _DipEncoder_Module(torch.nn.Module):
             The final Dip loss on the specified projection axis
         """
         # Calculate dip cluster m
-        dip_value_m = self.dip_module(X_embed[points_in_m], projection_axis_index)
+        dip_value_m, _, _ = self.dip_module(X_embed[points_in_m], projection_axis_index)
+        dip_value_m = (dip_value_m.detach() * 4) * dip_value_m # weight by dip
         # Calculate dip cluster n
-        dip_value_n = self.dip_module(X_embed[points_in_n], projection_axis_index)
+        dip_value_n, _, _ = self.dip_module(X_embed[points_in_n], projection_axis_index)
+        dip_value_n = (dip_value_n.detach() * 4) * dip_value_n # weight by dip
         # Calculate dip combined clusters m and n
         if n_points_in_m > self.max_cluster_size_diff_factor * n_points_in_n:
             perm = torch.randperm(n_points_in_m).to(device)
             sampled_m = points_in_m[perm[:int(n_points_in_n * self.max_cluster_size_diff_factor)]]
-            dip_value_mn = self.dip_module(torch.cat([X_embed[sampled_m], X_embed[points_in_n]]),
+            dip_value_mn, _, _ = self.dip_module(torch.cat([X_embed[sampled_m], X_embed[points_in_n]]),
                                     projection_axis_index)
         elif n_points_in_n > self.max_cluster_size_diff_factor * n_points_in_m:
             perm = torch.randperm(n_points_in_n).to(device)
             sampled_n = points_in_n[perm[:int(n_points_in_m * self.max_cluster_size_diff_factor)]]
-            dip_value_mn = self.dip_module(torch.cat([X_embed[points_in_m], X_embed[sampled_n]]),
+            dip_value_mn, _, _ = self.dip_module(torch.cat([X_embed[points_in_m], X_embed[sampled_n]]),
                                     projection_axis_index)
         else:
-            dip_value_mn = self.dip_module(X_embed[torch.cat([points_in_m, points_in_n])], projection_axis_index)
+            dip_value_mn, _, _ = self.dip_module(X_embed[torch.cat([points_in_m, points_in_n])], projection_axis_index)
+        dip_value_mn = (0.25 - dip_value_mn.detach()) * 4 * dip_value_mn # weight by dip
         # We want to maximize dip between clusters => set mn loss to -dip
         dip_loss_new = 0.5 * (dip_value_m + dip_value_n) - dip_value_mn
         return dip_loss_new
@@ -856,7 +856,8 @@ class DipEncoder(_AbstractDeepClusteringAlgo):
         self.projection_thresholds_ = dipencoder_module.projection_thresholds_
         self.index_dict_ = index_dict
         self.neural_network_trained_ = neural_network
-        self.set_n_featrues_in(X.shape[1])
+        self.n_clusters_out_ = n_clusters
+        self.set_n_featrues_in(X)
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -874,7 +875,7 @@ class DipEncoder(_AbstractDeepClusteringAlgo):
             The predicted labels
         """
         X_embed = self.transform(X)
-        labels_pred = _predict_using_thresholds(X_embed, self.projection_axes_, self.projection_thresholds_, self.n_clusters, self.index_dict_)
+        labels_pred = _predict_using_thresholds(X_embed, self.projection_axes_, self.projection_thresholds_, self.n_clusters_out_, self.index_dict_)
         return labels_pred.astype(np.int32)
 
     def plot(self, X: np.ndarray, edge_width: float = 0.2, show_legend: bool = True) -> None:

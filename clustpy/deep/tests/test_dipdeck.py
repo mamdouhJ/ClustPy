@@ -1,9 +1,8 @@
-from clustpy.deep import DipDECK, get_default_augmented_dataloaders
+from clustpy.deep import DipDECK
 from clustpy.deep.dipdeck import _get_nearest_points_to_optimal_centers, _get_nearest_points, _get_dip_matrix
-from clustpy.data import create_subspace_data, load_optdigits
 import numpy as np
-import torch
 from clustpy.utils.checks import check_clustpy_estimator
+from clustpy.deep.tests._helpers_for_tests import _test_dc_algorithm_simple, _test_dc_algorithm_with_augmentation
 
 
 def test_dipdeck_estimator():
@@ -13,37 +12,14 @@ def test_dipdeck_estimator():
 
 
 def test_simple_dipdeck():
-    torch.use_deterministic_algorithms(True)
-    X, labels = create_subspace_data(1000, subspace_features=(3, 50), random_state=1)
-    dipdeck = DipDECK(pretrain_epochs=3, clustering_epochs=3, random_state=1)
-    assert not hasattr(dipdeck, "labels_")
-    dipdeck.fit(X)
-    assert dipdeck.labels_.dtype == np.int32
-    assert dipdeck.labels_.shape == labels.shape
-    X_embed = dipdeck.transform(X)
-    assert X_embed.shape == (X.shape[0], dipdeck.embedding_size)
-    # Test if random state is working
-    dipdeck2 = DipDECK(pretrain_epochs=3, clustering_epochs=3, random_state=1)
-    dipdeck2.fit(X)
-    assert np.array_equal(dipdeck.labels_, dipdeck2.labels_)
+    dipdeck = DipDECK()
+    dipdeck, dipdeck2 = _test_dc_algorithm_simple(dipdeck, check_predict=False)
     assert np.array_equal(dipdeck.cluster_centers_, dipdeck2.cluster_centers_)
-    # Test predict
-    labels_predict = dipdeck.predict(X)
-    assert np.sum(dipdeck.labels_ == labels_predict) / labels_predict.shape[0] > 0.99
 
 
 def test_dipdeck_augmentation():
-    torch.use_deterministic_algorithms(True)
-    dataset = load_optdigits()
-    data = dataset.images[:1000]
-    labels = dataset.target[:1000]
-    aug_dl, orig_dl = get_default_augmented_dataloaders(data)
-    clusterer = DipDECK(pretrain_epochs=3, clustering_epochs=3, random_state=1,
-                        custom_dataloaders=[aug_dl, orig_dl], augmentation_invariance=True)
-    assert not hasattr(clusterer, "labels_")
-    clusterer.fit(data)
-    assert clusterer.labels_.dtype == np.int32
-    assert clusterer.labels_.shape == labels.shape
+    dipdeck = DipDECK()
+    _test_dc_algorithm_with_augmentation(dipdeck)
 
 
 def test_get_nearest_points_to_optimal_centers():
