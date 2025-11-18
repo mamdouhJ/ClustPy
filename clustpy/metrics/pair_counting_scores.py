@@ -1,4 +1,4 @@
-from clustpy.metrics._utils import _check_number_of_points
+from clustpy.metrics._metrics_utils import _check_number_of_points
 import numpy as np
 
 """

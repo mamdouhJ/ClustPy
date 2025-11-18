@@ -1,7 +1,7 @@
 from clustpy.hierarchical._cluster_tree import BinaryClusterTree
 from clustpy.metrics.confusion_matrix import ConfusionMatrix
 from clustpy.metrics.external_clustering_metrics import purity
-from clustpy.metrics._utils import _check_number_of_points
+from clustpy.metrics._metrics_utils import _check_number_of_points
 import numpy as np
 
 

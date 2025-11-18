@@ -3,7 +3,7 @@ from scipy.optimize import linear_sum_assignment
 from clustpy.metrics.confusion_matrix import ConfusionMatrix
 from scipy.special import comb
 from sklearn.metrics import normalized_mutual_info_score as nmi
-from clustpy.metrics._utils import _check_number_of_points
+from clustpy.metrics._metrics_utils import _check_number_of_points
 
 
 def variation_of_information(labels_true: np.ndarray, labels_pred: np.ndarray) -> float:

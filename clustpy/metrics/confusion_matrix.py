@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
-from clustpy.metrics._utils import _check_number_of_points
+from clustpy.metrics._metrics_utils import _check_number_of_points
 
 
 def _rearrange(confusion_matrix: np.ndarray) -> np.ndarray:
