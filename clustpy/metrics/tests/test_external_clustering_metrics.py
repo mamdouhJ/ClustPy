@@ -1,17 +1,7 @@
 import numpy as np
 from clustpy.metrics import unsupervised_clustering_accuracy, variation_of_information, \
     information_theoretic_external_cluster_validity_measure, fair_normalized_mutual_information, purity
-from clustpy.metrics.external_clustering_metrics import _check_number_of_points
-import pytest
 from sklearn.metrics import normalized_mutual_info_score as nmi
-
-
-def test_check_number_of_points():
-    l1 = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
-    l2 = np.array([0, 0, 1, 1, 1, 2, 3, 3, 4, 4])
-    assert _check_number_of_points(l1, l2) == True
-    with pytest.raises(Exception):
-        _check_number_of_points(l1, l2[1:])
 
 
 def test_unsupervised_clustering_accuracy():

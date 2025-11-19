@@ -59,6 +59,17 @@ def test_confusion_matrix_object():
                             [0, 1, 0, 1],
                             [0, 1, 0, 1]])
     assert np.array_equal(cm.confusion_matrix, expected_cm)
+    # Third test
+    labels_true = np.array([0, 1, 2, -3, 0, 1, 2, -3])
+    labels_pred = np.array([0, 0, -1, -1, 2, 2, -1, 3])
+    cm = ConfusionMatrix(labels_true, labels_pred)
+    expected_cm = np.array([[1, 0, 0, 0, 1],
+                            [0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0],
+                            [0, 1, 0, 1, 0],
+                            [0, 1, 0, 1, 0],
+                            [2, 0, 0, 0, 0]])
+    assert np.array_equal(cm.confusion_matrix, expected_cm)
 
 
 def test_confusion_matrix_rearrange():

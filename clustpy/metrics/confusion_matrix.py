@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
+from clustpy.metrics._metrics_utils import _check_number_of_points
 
 
 def _rearrange(confusion_matrix: np.ndarray) -> np.ndarray:
@@ -89,6 +90,8 @@ class ConfusionMatrix():
         The ground truth labels of the data set
     labels_pred : np.ndarray
         The labels as predicted by a clustering algorithm
+    shape : tuple
+        Shape of the resulting confusion matrix (default: None)
 
     Attributes
     ----------
@@ -96,18 +99,22 @@ class ConfusionMatrix():
         The confusion matrix
     """
 
-    def __init__(self, labels_true: np.ndarray, labels_pred: np.ndarray):
-        assert labels_true.shape[0] == labels_pred.shape[0], "Number of true and predicted labels must match"
-        self.true_clusters = np.unique(labels_true)
-        self.pred_clusters = np.unique(labels_pred)
-        conf_matrix = np.zeros((self.true_clusters.shape[0], self.pred_clusters.shape[0]), dtype=int)
-        for i, gt_label in enumerate(self.true_clusters):
-            # Get predictions which should be labeled with corresponding gt label
-            point_labels = labels_pred[labels_true == gt_label]
-            # Get different prediction labels
-            labels, cluster_sizes = np.unique(point_labels, return_counts=True)
-            for j, pred_label in enumerate(labels):
-                conf_matrix[i, np.where(self.pred_clusters == pred_label)[0][0]] = cluster_sizes[j]
+    def __init__(self, labels_true: np.ndarray, labels_pred: np.ndarray, shape: tuple=None):
+        _check_number_of_points(labels_true, labels_pred)
+        if np.any(labels_true < 0):
+            labels_true = labels_true.copy()
+            labels_true -= labels_true.min()
+        if np.any(labels_pred < 0):
+            labels_pred = labels_pred.copy()
+            labels_pred -= labels_pred.min()
+        labels_true = labels_true.astype(int)
+        labels_pred = labels_pred.astype(int)
+        if shape is None:
+            conf_matrix = np.zeros((labels_true.max() + 1, labels_pred.max() + 1), dtype=int)
+        else:
+            assert len(shape) == 2 and shape[0] > labels_true.max() and shape[1] > labels_pred.max(), f"Shape must contain two values such that shape[0] > labels_true.max() and shape[1] > labels_true.max(). Your values: shape = {shape}, labels_true.max() = {labels_true.max()}, labels_pred.max() = {labels_pred.max()}"
+            conf_matrix = np.zeros(shape, dtype=int)
+        np.add.at(conf_matrix, (labels_true, labels_pred), 1)
         self.confusion_matrix = conf_matrix
 
     def __str__(self):
