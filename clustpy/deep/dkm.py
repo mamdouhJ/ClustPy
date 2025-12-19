@@ -20,7 +20,7 @@ def _dkm(X: np.ndarray, n_clusters: int, alphas: list | tuple, batch_size: int, 
          neural_network: torch.nn.Module | tuple, neural_network_weights: str, embedding_size: int,
          clustering_loss_weight: float, ssl_loss_weight: float, custom_dataloaders: tuple,
          augmentation_invariance: bool, initial_clustering_class: ClusterMixin,
-         initial_clustering_params: dict, device: torch.device, random_state: np.random.RandomState) -> (
+         initial_clustering_params: dict, device: torch.device, random_state: np.random.RandomState,log_fn: Callable | None) -> (
         np.ndarray, np.ndarray, np.ndarray, np.ndarray, torch.nn.Module):
     """
     Start the actual DKM clustering procedure on the input data set.
@@ -90,9 +90,9 @@ def _dkm(X: np.ndarray, n_clusters: int, alphas: list | tuple, batch_size: int, 
     device, trainloader, testloader, _, neural_network, _, n_clusters, _, init_centers, _ = get_default_deep_clustering_initialization(
         X, n_clusters, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
         neural_network, embedding_size, custom_dataloaders, initial_clustering_class, initial_clustering_params, device,
-        random_state, neural_network_weights=neural_network_weights)
+        random_state, log_fn=log_fn, neural_network_weights=neural_network_weights)
     # Setup DKM Module
-    dkm_module = _DKM_Module(init_centers, alphas, augmentation_invariance).to(device)
+    dkm_module = _DKM_Module(init_centers, alphas, augmentation_invariance,log_fn).to(device)
     # Use DKM optimizer parameters (usually learning rate is reduced by a magnitude of 10)
     optimizer = optimizer_class(list(neural_network.parameters()) + list(dkm_module.parameters()),
                                 **clustering_optimizer_params)
@@ -183,10 +183,12 @@ class _DKM_Module(torch.nn.Module):
         Is augmentation invariance used
     """
 
-    def __init__(self, init_centers: np.ndarray, alphas: list, augmentation_invariance: bool = False):
+    def __init__(self, init_centers: np.ndarray, alphas: list,
+     augmentation_invariance: bool = False, log_fn: Callable | None = None):
         super().__init__()
         self.alphas = alphas
         self.augmentation_invariance = augmentation_invariance
+        self.log_fn = log_fn
         # Centers are learnable parameters
         self.centers = torch.nn.Parameter(torch.tensor(init_centers), requires_grad=True)
 
@@ -320,7 +322,7 @@ class _DKM_Module(torch.nn.Module):
             # Calculate clustering loss
             cluster_loss = self.dkm_loss(embedded, alpha)
         loss = ssl_loss_weight * ssl_loss + cluster_loss * clustering_loss_weight
-        return loss
+        return loss, ssl_loss, cluster_loss
 
     def fit(self, neural_network: torch.nn.Module, trainloader: torch.utils.data.DataLoader, n_epochs: int,
             device: torch.device, optimizer: torch.optim.Optimizer, ssl_loss_fn: Callable | torch.nn.modules.loss._Loss,
@@ -357,17 +359,27 @@ class _DKM_Module(torch.nn.Module):
         for alpha in self.alphas:
             for _ in range(n_epochs):
                 total_loss = 0
+                total_ssl_loss = 0
+                total_cluster_loss = 0
                 for batch in trainloader:
                     loss = self._loss(batch, alpha, neural_network, clustering_loss_weight, ssl_loss_weight,
                                       ssl_loss_fn, device)
-                    total_loss += loss.item()
+                    total_loss += loss[0].item()
+                    total_ssl_loss += loss[1].item()
+                    total_cluster_loss += loss[2].item()
                     # Backward pass
                     optimizer.zero_grad()
-                    loss.backward()
+                    loss[0].backward()
                     optimizer.step()
                 postfix_str = {"Loss": total_loss, "Alpha": alpha}
                 tbar.set_postfix(postfix_str)
                 tbar.update()
+            if self.log_fn is not None:
+                self.log_fn("Alpha completed", alpha)
+                self.log_fn("Total Loss", total_loss)
+                self.log_fn("SSL Loss", total_ssl_loss)
+                self.log_fn("Clustering Loss", total_cluster_loss)
+
         return self
 
 
@@ -543,7 +555,8 @@ class DKM(_AbstractDeepClusteringAlgo):
                                                                                       self.initial_clustering_class,
                                                                                       initial_clustering_params,
                                                                                       self.device,
-                                                                                      random_state)
+                                                                                      random_state,
+                                                                                      self._log_history)
         self.labels_ = kmeans_labels
         self.cluster_centers_ = kmeans_centers
         self.dkm_labels_ = dkm_labels

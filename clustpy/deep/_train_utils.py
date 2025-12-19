@@ -111,7 +111,9 @@ def get_trained_network(trainloader: torch.utils.data.DataLoader = None, data: n
                         ssl_loss_fn: Callable | torch.nn.modules.loss._Loss = mean_squared_error, embedding_size: int = 10,
                         neural_network: torch.nn.Module | tuple = None,
                         neural_network_class: torch.nn.Module = FeedforwardAutoencoder,
-                        neural_network_params: dict = None, neural_network_weights: str = None,
+                        neural_network_params: dict = None,
+                        log_fn: Callable[[str, float], None] = None,
+                        neural_network_weights: str = None,
                         random_state: np.random.RandomState | int = None) -> torch.nn.Module:
     """This function returns a trained neural network. The following cases are considered
        - If the neural network is initialized and trained (neural_network.fitted==True), then return input neural network without training it again.
@@ -147,6 +149,8 @@ def get_trained_network(trainloader: torch.utils.data.DataLoader = None, data: n
         The neural network class that should be used (default: FeedforwardAutoencoder)
     neural_network_params : dict
         Parameters to be used when creating a new neural network using the neural_network_class (default: None)
+    log_fn : Callable[[str, float], None]
+        Function to log pretraining information such as loss values. It has to take a string (key) and a float (value) as input parameters.
     neural_network_weights : str
         Path to a file containing the state_dict of the neural_network (default: None)
     random_state : np.random.RandomState | int
@@ -171,7 +175,7 @@ def get_trained_network(trainloader: torch.utils.data.DataLoader = None, data: n
         # Pretrain neural network
         optimizer_params = {"lr": 1e-3} if optimizer_params is None else optimizer_params
         neural_network.fit(n_epochs=n_epochs, optimizer_params=optimizer_params, dataloader=trainloader,
-                           optimizer_class=optimizer_class, ssl_loss_fn=ssl_loss_fn)
+                        optimizer_class=optimizer_class, ssl_loss_fn=ssl_loss_fn,log_fn=log_fn)
     return neural_network
 
 
@@ -185,6 +189,7 @@ def get_default_deep_clustering_initialization(X: np.ndarray | torch.Tensor, n_c
                                                random_state: np.random.RandomState,
                                                neural_network_class: torch.nn.Module = FeedforwardAutoencoder,
                                                neural_network_params: dict = None,
+                                               log_fn: Callable[[str, float], None] = None,
                                                neural_network_weights: str = None) -> (
         torch.device, torch.utils.data.DataLoader, torch.utils.data.DataLoader, int, torch.nn.Module, np.ndarray, int,
         np.ndarray, np.ndarray, ClusterMixin):
@@ -231,6 +236,8 @@ def get_default_deep_clustering_initialization(X: np.ndarray | torch.Tensor, n_c
         The neural network class that should be used (default: FeedforwardAutoencoder)
     neural_network_params : dict
         Parameters to be used when creating a new neural network using the neural_network_class (default: None)
+    log_fn : Callable[[str, float], None]
+        Function to log pretraining information such as loss values. It has to take a string (key) and a float (value) as input parameters.
     neural_network_weights : str
         Path to a file containing the state_dict of the neural_network (default: None)
 
@@ -256,6 +263,7 @@ def get_default_deep_clustering_initialization(X: np.ndarray | torch.Tensor, n_c
                                          neural_network=neural_network, neural_network_class=neural_network_class,
                                          neural_network_params=neural_network_params,
                                          neural_network_weights=neural_network_weights,
+                                         log_fn=log_fn,
                                          random_state=random_state)
     # Execute initial clustering in embedded space
     embedded_data = encode_batchwise(testloader, neural_network)

@@ -24,7 +24,7 @@ def _manifold_based_sequential_dc(X: np.ndarray, n_clusters: int, batch_size: in
                                   neural_network_weights: str, embedding_size: int, custom_dataloaders: tuple,
                                   manifold_class: TransformerMixin, manifold_params: dict,
                                   clustering_class: ClusterMixin, clustering_params: dict, device: torch.device,
-                                  random_state: np.random.RandomState) -> (
+                                  random_state: np.random.RandomState, log_fn: Callable | None ) -> (
         int, np.ndarray, np.ndarray, torch.nn.Module, TransformerMixin):
     """
     Execute a manifold-based sequential deep clustering procedure on the input data set.
@@ -69,6 +69,8 @@ def _manifold_based_sequential_dc(X: np.ndarray, n_clusters: int, batch_size: in
         The device on which to perform the computations
     random_state : np.random.RandomState
         use a fixed random state to get a repeatable solution
+    log_fn : Callable | None
+        function for logging training history values (e.g. loss values) during training
 
     Returns
     -------
@@ -88,7 +90,7 @@ def _manifold_based_sequential_dc(X: np.ndarray, n_clusters: int, batch_size: in
                                          optimizer_params=pretrain_optimizer_params, optimizer_class=optimizer_class,
                                          device=device, ssl_loss_fn=ssl_loss_fn, embedding_size=embedding_size,
                                          neural_network=neural_network, neural_network_weights=neural_network_weights,
-                                         random_state=random_state)
+                                         log_fn=log_fn, random_state=random_state)
     # Encode data
     X_embed = encode_batchwise(testloader, neural_network)
     # Get possible input parameters of the manifold class
@@ -356,7 +358,7 @@ class DDC(_AbstractDeepClusteringAlgo):
                                                                                     tsne_params,
                                                                                     DDC_density_peak_clustering,
                                                                                     {"ratio": self.ratio}, self.device,
-                                                                                    random_state)
+                                                                                    random_state,self._log_history)
         self.labels_ = labels
         self.n_clusters_ = n_clusters
         self.cluster_centers_ = centers_ae
@@ -503,7 +505,8 @@ class N2D(_AbstractDeepClusteringAlgo):
                                                                                               manifold_params,
                                                                                               GMM, initial_clustering_params, 
                                                                                               self.device,
-                                                                                              random_state)
+                                                                                              random_state,
+                                                                                              self._log_history)
         self.labels_ = labels.astype(np.int32)
         self.cluster_centers_manifold_ = centers_manifold
         self.cluster_centers_ = centers_ae
