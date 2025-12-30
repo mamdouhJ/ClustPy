@@ -15,7 +15,7 @@ import tqdm
 from collections.abc import Callable
 
 
-def _dcn(X: np.ndarray, n_clusters: int, batch_size: int, pretrain_optimizer_params: dict,
+def _dcn(X: np.ndarray, val_Set: np.ndarray | None, n_clusters: int, batch_size: int, pretrain_optimizer_params: dict,
          clustering_optimizer_params: dict, pretrain_epochs: int, clustering_epochs: int,
          optimizer_class: torch.optim.Optimizer, ssl_loss_fn: Callable | torch.nn.modules.loss._Loss,
          neural_network: torch.nn.Module | tuple, neural_network_weights: str,
@@ -33,6 +33,8 @@ def _dcn(X: np.ndarray, n_clusters: int, batch_size: int, pretrain_optimizer_par
         the given data set. Can be a np.ndarray or a torch.Tensor
     n_clusters : int
         number of clusters. Can be None if a corresponding initial_clustering_class is given, that can determine the number of clusters, e.g. DBSCAN
+    val_set : np.ndarray | None
+        Optional validation set for early stopping. If not None, Early stopping will be used    
     batch_size : int
         size of the data batches
     pretrain_optimizer_params : dict
@@ -88,7 +90,7 @@ def _dcn(X: np.ndarray, n_clusters: int, batch_size: int, pretrain_optimizer_par
     """
     # Get initial setting (device, dataloaders, pretrained AE and initial clustering result)
     device, trainloader, testloader, _, neural_network, _, n_clusters, init_labels, init_centers, _ = get_default_deep_clustering_initialization(
-        X, n_clusters, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
+        X, val_set, n_clusters, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
         neural_network, embedding_size, custom_dataloaders, initial_clustering_class, initial_clustering_params, device,
         random_state, log_fn=log_fn, neural_network_weights=neural_network_weights)
     # Setup DCN Module
@@ -488,7 +490,7 @@ class DCN(_AbstractDeepClusteringAlgo):
         self.initial_clustering_class = initial_clustering_class
         self.initial_clustering_params = initial_clustering_params
 
-    def fit(self, X: np.ndarray, y: np.ndarray = None) -> 'DCN':
+    def fit(self, X: np.ndarray, val_set: np.ndarray = None, y: np.ndarray = None) -> 'DCN':
         """
         Initiate the actual clustering process on the input data set.
         The resulting cluster labels will be stored in the labels_ attribute.
@@ -506,7 +508,7 @@ class DCN(_AbstractDeepClusteringAlgo):
             this instance of the DCN algorithm
         """
         X, _, random_state, pretrain_optimizer_params, clustering_optimizer_params, initial_clustering_params = self._check_parameters(X, y=y)
-        kmeans_labels, kmeans_centers, dcn_labels, dcn_centers, neural_network = _dcn(X, self.n_clusters,
+        kmeans_labels, kmeans_centers, dcn_labels, dcn_centers, neural_network = _dcn(X, val_Set, self.n_clusters,
                                                                                       self.batch_size,
                                                                                       pretrain_optimizer_params,
                                                                                       clustering_optimizer_params,

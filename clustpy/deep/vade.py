@@ -17,7 +17,7 @@ import tqdm
 from collections.abc import Callable
 
 
-def _vade(X: np.ndarray, n_clusters: int, batch_size: int, pretrain_optimizer_params: dict,
+def _vade(X: np.ndarray, val_set: np.ndarray | None, n_clusters: int, batch_size: int, pretrain_optimizer_params: dict,
           clustering_optimizer_params: dict, pretrain_epochs: int, clustering_epochs: int,
           optimizer_class: torch.optim.Optimizer, ssl_loss_fn: Callable | torch.nn.modules.loss._Loss,
           neural_network: torch.nn.Module | tuple, neural_network_weights: str,
@@ -33,6 +33,8 @@ def _vade(X: np.ndarray, n_clusters: int, batch_size: int, pretrain_optimizer_pa
     ----------
     X : np.ndarray / torch.Tensor
         the given data set. Can be a np.ndarray or a torch.Tensor
+    val_set : np.ndarray / torch.Tensor | None
+        validation set (can be ignored)
     n_clusters : int
         number of clusters. Can be None if a corresponding initial_clustering_class is given, that can determine the number of clusters, e.g. DBSCAN
     batch_size : int
@@ -87,7 +89,7 @@ def _vade(X: np.ndarray, n_clusters: int, batch_size: int, pretrain_optimizer_pa
     """
     # Get initial setting (device, dataloaders, pretrained AE and initial clustering result)
     device, trainloader, testloader, _, neural_network, _, n_clusters, init_labels, init_means, init_clustering_algo = get_default_deep_clustering_initialization(
-        X, n_clusters, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
+        X, val_set, n_clusters, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
         neural_network, embedding_size, custom_dataloaders, initial_clustering_class, initial_clustering_params, device,
         random_state, _VaDE_VAE, log_fn=log_fn, neural_network_weights=neural_network_weights)
     # Get parameters from initial clustering algorithm
@@ -595,7 +597,7 @@ class VaDE(_AbstractDeepClusteringAlgo):
         self.initial_clustering_class = initial_clustering_class
         self.initial_clustering_params = initial_clustering_params
 
-    def fit(self, X: np.ndarray, y: np.ndarray = None) -> 'VaDE':
+    def fit(self, X: np.ndarray, val_set: np.ndarray = None, y: np.ndarray = None) -> 'VaDE':
         """
         Initiate the actual clustering process on the input data set.
         The resulting cluster labels will be stored in the labels_ attribute.
@@ -604,6 +606,8 @@ class VaDE(_AbstractDeepClusteringAlgo):
         ----------
         X : np.ndarray
             the given data set
+        val_set : np.ndarray
+            validation set (can be ignored)
         y : np.ndarray
             the labels (can be ignored)
 
@@ -619,6 +623,7 @@ class VaDE(_AbstractDeepClusteringAlgo):
                                           "covariance_type": "diag"} if self.initial_clustering_params is None else self.initial_clustering_params
         gmm_labels, gmm_means, gmm_covariances, gmm_weights, vade_labels, vade_centers, vade_covariances, neural_network = _vade(
             X,
+            val_set,
             self.n_clusters,
             self.batch_size,
             pretrain_optimizer_params,

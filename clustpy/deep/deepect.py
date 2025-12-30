@@ -454,7 +454,7 @@ class _DeepECT_Module(torch.nn.Module):
         return self
 
 
-def _deep_ect(X: np.ndarray, max_n_leaf_nodes: int, batch_size: int, pretrain_optimizer_params: dict,
+def _deep_ect(X: np.ndarray, val_set: np.ndarray | None, max_n_leaf_nodes: int, batch_size: int, pretrain_optimizer_params: dict,
               clustering_optimizer_params: dict, pretrain_epochs: int, clustering_epochs: int, grow_interval: int,
               pruning_threshold: float, optimizer_class: torch.optim.Optimizer,
               ssl_loss_fn: Callable | torch.nn.modules.loss._Loss, neural_network: torch.nn.Module | tuple,
@@ -468,6 +468,8 @@ def _deep_ect(X: np.ndarray, max_n_leaf_nodes: int, batch_size: int, pretrain_op
     ----------
     X : np.ndarray
         The given data set. Can be a np.ndarray or a torch.Tensor
+    val_set : np.ndarray
+        validation set (can be ignored)
     max_n_leaf_nodes : int
         Maximum number of leaf nodes in the cluster tree
     batch_size : int
@@ -522,7 +524,7 @@ def _deep_ect(X: np.ndarray, max_n_leaf_nodes: int, batch_size: int, pretrain_op
     """
     # Get initial setting (device, dataloaders, pretrained AE and initial clustering result)
     device, trainloader, testloader, _, neural_network, _, _, _, init_leafnode_centers, _ = get_default_deep_clustering_initialization(
-        X, 2, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
+        X, val_set, 2, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
         neural_network, embedding_size, custom_dataloaders, KMeans, {"n_init": 20}, device,
         random_state, log_fn=log_fn, neural_network_weights=neural_network_weights)
     cluster_tree = BinaryClusterTree(_DeepECT_ClusterTreeNode)
@@ -639,7 +641,7 @@ class DeepECT(_AbstractDeepClusteringAlgo):
         self.custom_dataloaders = custom_dataloaders
         self.augmentation_invariance = augmentation_invariance
 
-    def fit(self, X: np.ndarray, y: np.ndarray = None) -> "DeepECT":
+    def fit(self, X: np.ndarray, val_set: np.ndarray = None, y: np.ndarray = None) -> "DeepECT":
         """
         Initiate the actual clustering process on the input data set.
         The resulting cluster labels will be stored in the labels_ attribute.
@@ -648,6 +650,8 @@ class DeepECT(_AbstractDeepClusteringAlgo):
         ----------
         X : np.ndarray
             the given data set
+        val_set : np.ndarray
+            validation set (can be ignored)
         y : np.ndarray
             the labels (can be ignored)
 
@@ -657,7 +661,7 @@ class DeepECT(_AbstractDeepClusteringAlgo):
             This instance of the DeepECT algorithm
         """
         X, _, random_state, pretrain_optimizer_params, clustering_optimizer_params, _ = self._check_parameters(X, y=y)
-        tree, labels, neural_network = _deep_ect(X, self.max_n_leaf_nodes, self.batch_size,
+        tree, labels, neural_network = _deep_ect(X, val_set, self.max_n_leaf_nodes, self.batch_size,
                                                  pretrain_optimizer_params, clustering_optimizer_params,
                                                  self.pretrain_epochs, self.clustering_epochs, self.grow_interval,
                                                  self.pruning_threshold, self.optimizer_class, self.ssl_loss_fn,

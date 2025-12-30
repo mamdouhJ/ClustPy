@@ -16,7 +16,7 @@ import tqdm
 from collections.abc import Callable#
 
 
-def _dec(X: np.ndarray, n_clusters: int, alpha: float, batch_size: int, pretrain_optimizer_params: dict,
+def _dec(X: np.ndarray,val_set: np.ndarray | None, n_clusters: int, alpha: float, batch_size: int, pretrain_optimizer_params: dict,
          clustering_optimizer_params: dict, pretrain_epochs: int, clustering_epochs: int,
          optimizer_class: torch.optim.Optimizer, ssl_loss_fn: Callable | torch.nn.modules.loss._Loss,
          neural_network: torch.nn.Module | tuple, neural_network_weights: str, embedding_size: int,
@@ -32,6 +32,8 @@ def _dec(X: np.ndarray, n_clusters: int, alpha: float, batch_size: int, pretrain
     ----------
     X : np.ndarray / torch.Tensor
         the given data set. Can be a np.ndarray or a torch.Tensor
+    val_set : np.ndarray | None
+        Optional validation set for early stopping. If not None, Early stopping will be used
     n_clusters : int
         number of clusters. Can be None if a corresponding initial_clustering_class is given, that can determine the number of clusters, e.g. DBSCAN
     alpha : float
@@ -89,7 +91,7 @@ def _dec(X: np.ndarray, n_clusters: int, alpha: float, batch_size: int, pretrain
     """
     # Get initial setting (device, dataloaders, pretrained AE and initial clustering result)
     device, trainloader, testloader, _, neural_network, _, n_clusters, _, init_centers, _ = get_default_deep_clustering_initialization(
-        X, n_clusters, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
+        X, val_set, n_clusters, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
         neural_network, embedding_size, custom_dataloaders, initial_clustering_class, initial_clustering_params, device,
         random_state, log_fn=log_fn, neural_network_weights=neural_network_weights)
     # Setup DEC Module
@@ -525,7 +527,7 @@ class DEC(_AbstractDeepClusteringAlgo):
         self.initial_clustering_class = initial_clustering_class
         self.initial_clustering_params = initial_clustering_params
 
-    def fit(self, X: np.ndarray, y: np.ndarray = None) -> 'DEC':
+    def fit(self, X: np.ndarray,val_set: np.ndarray | None = None, y: np.ndarray = None) -> 'DEC':
         """
         Initiate the actual clustering process on the input data set.
         The resulting cluster labels will be stored in the labels_ attribute.
@@ -534,6 +536,9 @@ class DEC(_AbstractDeepClusteringAlgo):
         ----------
         X : np.ndarray
             the given data set
+        val_set : np.ndarray | None
+            optional validation set for monitoring purposes (can be ignored)
+
         y : np.ndarray
             the labels (can be ignored)
 
@@ -544,7 +549,7 @@ class DEC(_AbstractDeepClusteringAlgo):
         """
         ssl_loss_weight = self.ssl_loss_weight if hasattr(self, "ssl_loss_weight") else 0 # DEC does not use ssl loss when clustering
         X, _, random_state, pretrain_optimizer_params, clustering_optimizer_params, initial_clustering_params = self._check_parameters(X, y=y)
-        kmeans_labels, kmeans_centers, dec_labels, dec_centers, neural_network = _dec(X, self.n_clusters, self.alpha,
+        kmeans_labels, kmeans_centers, dec_labels, dec_centers, neural_network = _dec(X,val_set, self.n_clusters, self.alpha,
                                                                                       self.batch_size,
                                                                                       pretrain_optimizer_params,
                                                                                       clustering_optimizer_params,

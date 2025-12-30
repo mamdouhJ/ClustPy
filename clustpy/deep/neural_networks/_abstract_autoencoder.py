@@ -266,7 +266,7 @@ class _AbstractAutoencoder(torch.nn.Module):
         """
         with torch.no_grad():
             self.eval()
-            loss = torch.tensor(0.)
+            loss = torch.tensor(0.0,device=device)
             for batch in dataloader:
                 new_loss, _, _ = self.loss(batch, ssl_loss_fn, device)
                 loss += new_loss
@@ -384,8 +384,11 @@ class _AbstractAutoencoder(torch.nn.Module):
                         self.save_parameters(model_path)
                 if early_stopping.early_stop:
                     print(f"Stop training at epoch {best_epoch}. Best Loss: {best_loss:.6f}, Last Loss: {val_loss:.6f}")
+                    break
                 if scheduler is not None and eval_step_scheduler:
                     scheduler.step(val_loss)
+                if log_fn is not None:
+                    log_fn("pretrain/Eval Loss", val_loss.item())
             if log_fn is not None:
                 if evalloader is not None:
                     log_fn("pretrain/Eval Loss", val_loss.item())

@@ -14,7 +14,7 @@ import tqdm
 from collections.abc import Callable
 
 
-def _dkm(X: np.ndarray, n_clusters: int, alphas: list | tuple, batch_size: int, pretrain_optimizer_params: dict,
+def _dkm(X: np.ndarray, val_set: np.ndarray | None, n_clusters: int, alphas: list | tuple, batch_size: int, pretrain_optimizer_params: dict,
          clustering_optimizer_params: dict, pretrain_epochs: int, clustering_epochs: int,
          optimizer_class: torch.optim.Optimizer, ssl_loss_fn: Callable | torch.nn.modules.loss._Loss,
          neural_network: torch.nn.Module | tuple, neural_network_weights: str, embedding_size: int,
@@ -29,6 +29,8 @@ def _dkm(X: np.ndarray, n_clusters: int, alphas: list | tuple, batch_size: int, 
     ----------
     X : np.ndarray / torch.Tensor
         the given data set. Can be a np.ndarray or a torch.Tensor
+    val_set : np.ndarray
+        validation set (can be ignored)
     n_clusters : int
         number of clusters. Can be None if a corresponding initial_clustering_class is given, that can determine the number of clusters, e.g. DBSCAN
     alphas : list | tuple
@@ -88,7 +90,7 @@ def _dkm(X: np.ndarray, n_clusters: int, alphas: list | tuple, batch_size: int, 
     """
     # Get initial setting (device, dataloaders, pretrained AE and initial clustering result)
     device, trainloader, testloader, _, neural_network, _, n_clusters, _, init_centers, _ = get_default_deep_clustering_initialization(
-        X, n_clusters, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
+        X, val_set, n_clusters, batch_size, pretrain_optimizer_params, pretrain_epochs, optimizer_class, ssl_loss_fn,
         neural_network, embedding_size, custom_dataloaders, initial_clustering_class, initial_clustering_params, device,
         random_state, log_fn=log_fn, neural_network_weights=neural_network_weights)
     # Setup DKM Module
@@ -518,7 +520,7 @@ class DKM(_AbstractDeepClusteringAlgo):
         assert type(alphas) is tuple or type(alphas) is list, "alphas must be a list, int or tuple"
         return alphas
 
-    def fit(self, X: np.ndarray, y: np.ndarray = None) -> 'DKM':
+    def fit(self, X: np.ndarray, val_set: np.ndarray = None, y: np.ndarray = None) -> 'DKM':
         """
         Initiate the actual clustering process on the input data set.
         The resulting cluster labels will be stored in the labels_ attribute.
@@ -527,6 +529,8 @@ class DKM(_AbstractDeepClusteringAlgo):
         ----------
         X : np.ndarray
             the given data set
+        val_set : np.ndarray
+            validation set (can be ignored)
         y : np.ndarray
             the labels (can be ignored)
 
@@ -537,7 +541,7 @@ class DKM(_AbstractDeepClusteringAlgo):
         """
         X, _, random_state, pretrain_optimizer_params, clustering_optimizer_params, initial_clustering_params = self._check_parameters(X, y=y)
         alphas = self._check_alphas()
-        kmeans_labels, kmeans_centers, dkm_labels, dkm_centers, neural_network = _dkm(X, self.n_clusters, alphas,
+        kmeans_labels, kmeans_centers, dkm_labels, dkm_centers, neural_network = _dkm(X, val_set, self.n_clusters, alphas,
                                                                                       self.batch_size,
                                                                                       pretrain_optimizer_params,
                                                                                       clustering_optimizer_params,
